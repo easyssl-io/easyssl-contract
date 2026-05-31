@@ -1,0 +1,11 @@
+# Build output
+/bin/
+*.exe
+*.out
+
+# Test / coverage
+*.test
+coverage.out
+
+# Editor / OS
+.DS_Store
