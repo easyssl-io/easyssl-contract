@@ -1,4 +1,4 @@
-// Package wire defines the versioned EasySSL Client-to-Server contract.
+// Package wire defines the versioned easySSL Client-to-Server contract.
 //
 // It is the single, public source of truth for the backward-compatible wire
 // protocol that both the open-source Client and the Server depend on. Keep this

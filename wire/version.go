@@ -1,6 +1,6 @@
 package wire
 
-// ProtocolVersion is the EasySSL Client-to-Server wire-protocol version,
+// ProtocolVersion is the easySSL Client-to-Server wire-protocol version,
 // formatted MAJOR.MINOR.BUILD. MAJOR is bumped only for breaking contract
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
