@@ -1,12 +1,13 @@
 package wire
 
-// Client registration and check-in wire types (S4 US1). These cross the
-// public Client↔Server boundary, so keep them dependency-free and additive
-// (Principle VI): new fields are optional, existing ones never change meaning.
+// Client registration, check-in, and unregistration wire types. These cross the
+// public Client↔Server boundary, so keep them dependency-free and additive:
+// Clients cannot be force-upgraded, so new fields are optional and existing
+// ones never change meaning.
 
-// Client-facing route paths. The Client posts registration and check-in here;
-// neither carries the session cookie (registration is gated by the shared
-// organization registration key, check-in by the per-Client bearer token).
+// Client-facing route paths. None carries the console session cookie:
+// registration is gated by the shared organization registration key, and the
+// other routes by the per-Client bearer token.
 const (
 	// RouteRegistrations is the check-in that creates a pending Client and, on
 	// success, returns the one-time bearer token.
@@ -14,6 +15,11 @@ const (
 	// RouteCheckin is the authenticated poll: while pending it reports status,
 	// and once active it also refreshes the Client's last-seen.
 	RouteCheckin = "/api/v1/client/checkin"
+	// RouteRegistration is the Client's own registration, which it DELETEs to
+	// unregister itself when uninstalling. The Server drops the Client and its
+	// token, so the host disappears from the organization without the operator
+	// having to remove it from the web console.
+	RouteRegistration = "/api/v1/client/registration"
 )
 
 // Error codes returned in the ErrorResponse.Code field so the Client can react
@@ -38,8 +44,8 @@ const (
 )
 
 // Diagnostics is the host information the Client captures at install and
-// reports at registration (FR-004). Install-log reporting (FR-004a) is deferred
-// with US4 and is intentionally absent here.
+// reports at registration. Reporting the installation log is a later addition
+// and is intentionally absent here.
 type Diagnostics struct {
 	MachineID   string `json:"machineId"`
 	Hostname    string `json:"hostname"`
