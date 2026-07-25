@@ -15,10 +15,11 @@ const (
 	// RouteCheckin is the authenticated poll: while pending it reports status,
 	// and once active it also refreshes the Client's last-seen.
 	RouteCheckin = "/api/v1/client/checkin"
-	// RouteRegistration is the Client's own registration, which it DELETEs to
-	// unregister itself when uninstalling. The Server drops the Client and its
-	// token, so the host disappears from the organization without the operator
-	// having to remove it from the web console.
+	// RouteRegistration is the Client's own registration. GET reads it, so a
+	// Client can ask what the Server currently considers it to be; DELETE
+	// removes it, which is how a Client unregisters itself when uninstalling,
+	// dropping the Client and its token so the host disappears from the
+	// organization without the operator removing it from the web console.
 	RouteRegistration = "/api/v1/client/registration"
 )
 
@@ -79,6 +80,16 @@ type RegistrationResponse struct {
 // the Authorization header, not here.
 type CheckinRequest struct {
 	ClientVersion string `json:"clientVersion"`
+}
+
+// RegistrationStatus is the read-only view of a Client's own registration,
+// returned by GET RouteRegistration. Reading is deliberately free of side
+// effects: unlike a check-in it does NOT refresh last-seen, so a Client (or an
+// operator running a status command) can ask "what am I?" without making a
+// stopped Client look alive in the web console.
+type RegistrationStatus struct {
+	Status      string `json:"status"`
+	DisplayName string `json:"displayName"`
 }
 
 // CheckinResponse reports the current status, the display name the console
