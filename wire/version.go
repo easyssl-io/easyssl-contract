@@ -4,4 +4,4 @@ package wire
 // formatted MAJOR.MINOR.BUILD. MAJOR is bumped only for breaking contract
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
-const ProtocolVersion = "0.3.0"
+const ProtocolVersion = "0.4.0"

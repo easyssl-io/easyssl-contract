@@ -62,7 +62,7 @@ type RegistrationRequest struct {
 	RegistrationKey string      `json:"registrationKey"`
 	InstanceID      string      `json:"instanceId"`
 	ProposedName    string      `json:"proposedName"`
-	AgentVersion    string      `json:"agentVersion"`
+	ClientVersion   string      `json:"clientVersion"`
 	ProtocolVersion string      `json:"protocolVersion"`
 	Diagnostics     Diagnostics `json:"diagnostics"`
 }
@@ -78,7 +78,7 @@ type RegistrationResponse struct {
 // CheckinRequest is the authenticated poll body; the bearer token travels in
 // the Authorization header, not here.
 type CheckinRequest struct {
-	AgentVersion string `json:"agentVersion"`
+	ClientVersion string `json:"clientVersion"`
 }
 
 // CheckinResponse reports the current status, the display name the console
