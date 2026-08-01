@@ -37,6 +37,10 @@ const (
 const (
 	// CommandRequestCSR asks the Client to generate a key and return a CSR for
 	// a certificate the Server is issuing. RefID is the certificate.
+	//
+	// The names are already decided when this is sent: the Client reads the
+	// certificate's domains and signs those, rather than choosing what to ask
+	// for. The Server checks the returned CSR against them before using it.
 	CommandRequestCSR = "request_csr"
 	// CommandDeploy asks the Client to place a certificate at a Target and run
 	// its reload command. RefID is the deployment.
