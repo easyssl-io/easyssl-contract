@@ -60,7 +60,9 @@ const (
 	// instruction is stale and is discarded.
 	CodeNotAwaitingCSR = "not_awaiting_csr"
 	// CodeCSRMismatch (422): verification failed and nothing was stored. The
-	// certificate keeps waiting; if nothing valid ever arrives its command
-	// expires and the failure names this Client.
+	// Server fails the certificate at the rejection, naming this Client and
+	// what failed — it cannot rely on the command expiring, because the Client
+	// acks a rejection as handled and an acked command never expires. A retry
+	// issues a fresh command.
 	CodeCSRMismatch = "csr_mismatch"
 )
