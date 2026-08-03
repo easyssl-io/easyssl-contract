@@ -48,7 +48,6 @@ const (
 // reports at registration. Reporting the installation log is a later addition
 // and is intentionally absent here.
 type Diagnostics struct {
-	MachineID   string `json:"machineId"`
 	Hostname    string `json:"hostname"`
 	OS          string `json:"os"`
 	HostType    string `json:"hostType"`
