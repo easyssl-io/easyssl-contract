@@ -29,9 +29,15 @@ const (
 	// CodeInvalidRegistrationKey: the presented registration key matched no
 	// organization (registration rejected, 401).
 	CodeInvalidRegistrationKey = "invalid_registration_key"
-	// CodeInstanceIDTaken: the instance ID is already registered; the installer
-	// regenerates it and retries (409).
+	// CodeInstanceIDTaken: the presented instance ID names a Client that cannot
+	// be re-registered with this key — a live row, or a removed one claimed
+	// with another organization's key (409).
 	CodeInstanceIDTaken = "instance_id_taken"
+	// CodeUnknownInstanceID: the presented instance ID names no Client. Only
+	// the Server mints instance IDs, so an unknown one is stale local state
+	// (a reset Server, a hand-edited config), never something to register
+	// under; the host re-registers fresh after clearing it (404).
+	CodeUnknownInstanceID = "unknown_instance_id"
 	// CodeUnknownToken: the bearer token is not recognized — revoked, or the
 	// registration was rejected (a Client cannot distinguish the two, by
 	// design) (401).
@@ -57,10 +63,13 @@ type Diagnostics struct {
 }
 
 // RegistrationRequest is the Client's first contact: it proposes a name and
-// identity and presents the organization's registration key.
+// presents the organization's registration key. InstanceID is empty on a fresh
+// registration — the Server mints one and returns it — and carries the persisted
+// ID on a reinstall, so the Server updates that Client instead of creating a
+// second one.
 type RegistrationRequest struct {
 	RegistrationKey string      `json:"registrationKey"`
-	InstanceID      string      `json:"instanceId"`
+	InstanceID      string      `json:"instanceId,omitempty"`
 	ProposedName    string      `json:"proposedName"`
 	ClientVersion   string      `json:"clientVersion"`
 	ProtocolVersion string      `json:"protocolVersion"`
@@ -68,9 +77,11 @@ type RegistrationRequest struct {
 }
 
 // RegistrationResponse carries the one-time bearer token (transmitted only
-// here) plus the initial status and the poll cadence the Client should use.
+// here), the Server-assigned instance ID the Client persists, plus the initial
+// status and the poll cadence the Client should use.
 type RegistrationResponse struct {
 	ClientToken     string `json:"clientToken"`
+	InstanceID      string `json:"instanceId"`
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 }
