@@ -63,5 +63,12 @@ type DeploymentWork struct {
 type DeploymentResult struct {
 	OK            bool   `json:"ok"`
 	PluginVersion string `json:"pluginVersion"`
-	Output        string `json:"output"`
+	// Output is what the Plugin itself printed, and nothing else: empty
+	// whenever no Plugin ran, so a reader is never shown the Client's words
+	// under the Plugin's name.
+	Output string `json:"output"`
+	// Message is the Client's own account of the attempt, for what the Plugin
+	// could not say: it was not installed, its artifact could not be run, this
+	// host holds no key for the Certificate, the run was killed at the bound.
+	Message string `json:"message,omitempty"`
 }
