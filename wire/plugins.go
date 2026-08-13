@@ -23,6 +23,9 @@ type SettingDeclaration = plugincontract.SettingDeclaration
 // web console works whether or not the host is reachable.
 type PluginReport struct {
 	Version string `json:"version"`
+	// Description is the build's own account of what it installs onto, passed
+	// on verbatim from its describe answer like the declarations below.
+	Description string `json:"description,omitempty"`
 	// Digest is the SHA-256 of the installed artifact, as recorded from the
 	// catalog at install time. Identity metadata: it says which bytes this
 	// host runs.

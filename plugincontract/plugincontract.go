@@ -64,10 +64,16 @@ type SettingDeclaration struct {
 // declares. Version is the Plugin's own; the Client reports it together with
 // the artifact digest, so what a host runs is always attributable.
 type DescribeResponse struct {
-	ContractVersion string               `json:"contractVersion"`
-	Name            string               `json:"name"`
-	Version         string               `json:"version"`
-	Settings        []SettingDeclaration `json:"settings"`
+	ContractVersion string `json:"contractVersion"`
+	Name            string `json:"name"`
+	Version         string `json:"version"`
+	// Description says what this Plugin installs onto, in one or two sentences
+	// a person choosing between Plugins can read. The settings each describe
+	// one value; nothing until now described the Plugin, so a page about one
+	// could only list what it could be configured with. Optional: a Plugin that
+	// says nothing is shown without it rather than with an empty line.
+	Description string               `json:"description,omitempty"`
+	Settings    []SettingDeclaration `json:"settings"`
 }
 
 // InstallRequest is OpInstall's request. The material arrives as PEM text, not
