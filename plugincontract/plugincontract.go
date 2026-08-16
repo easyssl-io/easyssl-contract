@@ -14,7 +14,7 @@ package plugincontract
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
 // the fields it does not recognize.
-const ContractVersion = "1.0.0"
+const ContractVersion = "1.1.0"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
