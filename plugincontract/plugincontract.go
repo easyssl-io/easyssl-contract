@@ -1,11 +1,11 @@
-// Package plugincontract is the contract between the easySSL Client and every
-// Plugin executable. It is versioned independently of the Client↔Server wire
-// protocol, because Plugins and Clients release independently.
+// Package plugincontract is the contract between the easySSL Agent and every
+// Plugin executable. It is versioned independently of the Agent↔Server wire
+// protocol, because Plugins and Agents release independently.
 //
 // Every operation is one execution of the Plugin binary: the operation name is
 // the single argv argument, the JSON request rides stdin, the JSON response
 // rides stdout, and stderr carries the Plugin's own diagnostics, which the
-// Client logs but never parses. The operation name is the only thing argv
+// Agent logs but never parses. The operation name is the only thing argv
 // carries, deliberately: `/proc/<pid>/cmdline` is world-readable on Linux, so
 // anything sensitive — the private key above all — must ride the pipe, where
 // nothing remains to read afterwards.
@@ -18,15 +18,15 @@ const ContractVersion = "1.1.0"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
-// stderr, and the Client treats the operation as unsupported.
+// stderr, and the Agent treats the operation as unsupported.
 const (
 	// OpDescribe asks the Plugin to identify itself and declare its settings.
-	// It takes no request body. The Client runs it once at install time and
+	// It takes no request body. The Agent runs it once at install time and
 	// reports the answer to the Server, which is how the web console can show
 	// and configure a Plugin's settings without ever reaching the host.
 	OpDescribe = "describe"
 	// OpInstall performs one certificate installation. Everything that happens
-	// on the host happens inside this one call; the Client sees only the
+	// on the host happens inside this one call; the Agent sees only the
 	// response.
 	OpInstall = "install"
 )
@@ -61,7 +61,7 @@ type SettingDeclaration struct {
 }
 
 // DescribeResponse is OpDescribe's answer: who this build is and what it
-// declares. Version is the Plugin's own; the Client reports it together with
+// declares. Version is the Plugin's own; the Agent reports it together with
 // the artifact digest, so what a host runs is always attributable.
 type DescribeResponse struct {
 	ContractVersion string `json:"contractVersion"`
@@ -84,9 +84,9 @@ type InstallRequest struct {
 	CertificatePem  string `json:"certificatePem"`
 	ChainPem        string `json:"chainPem"`
 	PrivateKeyPem   string `json:"privateKeyPem"`
-	// WorkDir is a directory the Client created for this run and removes after
+	// WorkDir is a directory the Agent created for this run and removes after
 	// it, however it ends. A Plugin that materializes files puts them there, so
-	// a run the Client had to kill cannot leave key material behind; a Plugin
+	// a run the Agent had to kill cannot leave key material behind; a Plugin
 	// that writes nothing ignores it.
 	WorkDir string `json:"workDir"`
 	// Settings is the resolved value of every setting this Plugin declares,
@@ -101,7 +101,7 @@ type InstallRequest struct {
 //
 // The process exit code is transport only: exit 0 with OK false is a
 // deployment that failed, while a non-zero exit or unparseable stdout is a
-// Plugin failure the Client reports as the deployment's failure with whatever
+// Plugin failure the Agent reports as the deployment's failure with whatever
 // it captured.
 type InstallResponse struct {
 	ContractVersion string `json:"contractVersion"`
