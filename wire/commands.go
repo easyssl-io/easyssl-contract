@@ -1,12 +1,12 @@
 package wire
 
-// The Server→Agent push channel. The Server cannot open a connection to a
+// The Server→Agent push channel. The Server cannot open a connection to an
 // Agent, so the Agent holds one long-lived stream open and the Server writes
 // to it. What travels over that stream is deliberately almost nothing: a
 // command id. The Agent then reads the command, and the resource it refers to,
 // over ordinary request/response routes.
 //
-// The stream is an optimization, never the delivery mechanism. A Agent that
+// The stream is an optimization, never the delivery mechanism. An Agent that
 // never manages to hold it open still performs every command, just later, by
 // listing pending commands on its regular poll. That is what makes a lost,
 // duplicated or out-of-order event harmless, and it is why nothing here
@@ -15,14 +15,14 @@ package wire
 import "time"
 
 // Push-channel route paths. All three carry the per-Agent bearer token and all
-// three require an active Agent: a Agent still awaiting authorization, or one
+// three require an active Agent: an Agent still awaiting authorization, or one
 // whose registration was removed, is refused exactly as it is on check-in.
 const (
 	// RouteEvents is the long-lived stream (SSE). One connection per Agent
 	// carries every command type, rather than one connection per capability,
-	// so a Agent behind a restrictive network has a single thing to keep open.
+	// so an Agent behind a restrictive network has a single thing to keep open.
 	RouteEvents = "/api/v1/agent/events"
-	// RouteCommands lists the commands a Agent has not finished yet. The
+	// RouteCommands lists the commands an Agent has not finished yet. The
 	// Agent reads this on every (re)connect and on every poll, which is what
 	// actually guarantees a command runs.
 	RouteCommands = "/api/v1/agent/commands"
@@ -31,7 +31,7 @@ const (
 	RouteCommandAck = "/api/v1/agent/commands/{id}/ack"
 )
 
-// Command types. A Agent that does not recognize a type reports it
+// Command types. An Agent that does not recognize a type reports it
 // unsupported rather than failing, so adding one here stays backward
 // compatible with Agents already in the field.
 const (
@@ -47,7 +47,7 @@ const (
 	CommandDeploy = "deploy"
 )
 
-// Terminal states a Agent can report for a command. There is no "failed":
+// Terminal states an Agent can report for a command. There is no "failed":
 // whether the work succeeded belongs to the resource the command refers to, so
 // a deployment that fails is recorded on the deployment. These say only whether
 // the Agent is done with the command.
@@ -60,7 +60,7 @@ const (
 	CommandStatusUnsupported = "unsupported"
 )
 
-// CodeCommandExpired is returned when a Agent acks a command whose expiry has
+// CodeCommandExpired is returned when an Agent acks a command whose expiry has
 // passed (409). The Agent must not have acted on it: the instruction is stale
 // and is discarded rather than run late.
 const CodeCommandExpired = "command_expired"
@@ -78,7 +78,7 @@ type CommandEvent struct {
 	CommandID string `json:"commandId"`
 }
 
-// Command is one instruction for a Agent, as returned by RouteCommands. RefID
+// Command is one instruction for an Agent, as returned by RouteCommands. RefID
 // names the resource holding the actual work; the Agent fetches that resource
 // by its own route. Nothing here describes the work itself.
 type Command struct {
@@ -89,7 +89,7 @@ type Command struct {
 	ExpiresAt time.Time `json:"expiresAt"`
 }
 
-// CommandsResponse is the reconcile fetch, oldest command first so a Agent
+// CommandsResponse is the reconcile fetch, oldest command first so an Agent
 // works through a backlog in the order the Server created it.
 type CommandsResponse struct {
 	Commands []Command `json:"commands"`
@@ -99,7 +99,7 @@ type CommandsResponse struct {
 // CommandStatusAcked or CommandStatusUnsupported.
 //
 // It is sent after the attempt terminates and after any outcome has been
-// recorded on the referenced resource, never before. A Agent that dies in
+// recorded on the referenced resource, never before. An Agent that dies in
 // between leaves the command outstanding, so it is handed back on the next
 // connect and re-run against an outcome already recorded, which is why the
 // Agent must be able to receive the same command twice and act once.

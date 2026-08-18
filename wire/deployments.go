@@ -35,7 +35,7 @@ const (
 
 // CodeDeploymentFinished is returned when a result arrives for a deployment
 // that is already terminal (409). The record is write-once, so the Agent
-// treats this as done: a Agent that died between acting and reporting re-runs
+// treats this as done: an Agent that died between acting and reporting re-runs
 // safely and its second report lands here.
 const CodeDeploymentFinished = "deployment_finished"
 

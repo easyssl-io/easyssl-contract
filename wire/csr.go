@@ -21,7 +21,7 @@ const (
 )
 
 // KeyTypeECP256 is the one certificate key type the protocol names today. The
-// field exists so adding another is a MINOR bump rather than a new route; a
+// field exists so adding another is a MINOR bump rather than a new route; an
 // Agent seeing a type it cannot generate leaves the work unanswered and the
 // command's expiry reports it (the Agent is older than the Server).
 const KeyTypeECP256 = "ec_p256"
@@ -51,7 +51,7 @@ type CSRSubmission struct {
 // refusal and acks the command.
 const (
 	// CodeCSRAlreadySubmitted (409): a CSR is already stored. Treated as
-	// success — an ECDSA re-signature never reproduces the same bytes, so a
+	// success — an ECDSA re-signature never reproduces the same bytes, so an
 	// Agent re-run after a crash cannot recognize its own submission, and the
 	// stored CSR is from the same key anyway because key generation is
 	// idempotent per certificate.

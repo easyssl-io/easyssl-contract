@@ -15,9 +15,9 @@ const (
 	// RouteCheckin is the authenticated poll: while pending it reports status,
 	// and once active it also refreshes the Agent's last-seen.
 	RouteCheckin = "/api/v1/agent/checkin"
-	// RouteRegistration is the Agent's own registration. GET reads it, so a
+	// RouteRegistration is the Agent's own registration. GET reads it, so an
 	// Agent can ask what the Server currently considers it to be; DELETE
-	// removes it, which is how a Agent unregisters itself when uninstalling,
+	// removes it, which is how an Agent unregisters itself when uninstalling,
 	// dropping the Agent and its token so the host disappears from the
 	// organization without the operator removing it from the web console.
 	RouteRegistration = "/api/v1/agent/registration"
@@ -29,7 +29,7 @@ const (
 	// CodeInvalidRegistrationKey: the presented registration key matched no
 	// organization (registration rejected, 401).
 	CodeInvalidRegistrationKey = "invalid_registration_key"
-	// CodeAgentIDTaken: the presented Agent ID names a Agent that cannot
+	// CodeAgentIDTaken: the presented Agent ID names an Agent that cannot
 	// be re-registered with this key — a live row, or a removed one claimed
 	// with another organization's key (409).
 	CodeAgentIDTaken = "agent_id_taken"
@@ -39,7 +39,7 @@ const (
 	// the host re-registers fresh after clearing it (404).
 	CodeUnknownAgentID = "unknown_agent_id"
 	// CodeUnknownToken: the bearer token is not recognized — revoked, or the
-	// registration was rejected (a Agent cannot distinguish the two, by
+	// registration was rejected (an Agent cannot distinguish the two, by
 	// design) (401).
 	CodeUnknownToken = "unknown_token"
 )
@@ -67,7 +67,7 @@ type Diagnostics struct {
 // registration — the Server mints the Agent's public identifier (`agnt-` plus
 // 14 base32 characters) and returns it — and carries the persisted identifier
 // on a reinstall, so the Server updates that Agent instead of creating a
-// second one. It is the same identifier the console shows; a Agent has no
+// second one. It is the same identifier the console shows; an Agent has no
 // separate machine-facing identity.
 type RegistrationRequest struct {
 	RegistrationKey string      `json:"registrationKey"`
@@ -94,9 +94,9 @@ type CheckinRequest struct {
 	AgentVersion string `json:"agentVersion"`
 }
 
-// RegistrationStatus is the read-only view of a Agent's own registration,
+// RegistrationStatus is the read-only view of an Agent's own registration,
 // returned by GET RouteRegistration. Reading is deliberately free of side
-// effects: unlike a check-in it does NOT refresh last-seen, so a Agent (or an
+// effects: unlike a check-in it does NOT refresh last-seen, so an Agent (or an
 // operator running a status command) can ask "what am I?" without making a
 // stopped Agent look alive in the web console.
 type RegistrationStatus struct {

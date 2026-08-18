@@ -1,6 +1,6 @@
 package wire
 
-// The Agent reporting what it has installed. A Agent holds many Plugins but
+// The Agent reporting what it has installed. An Agent holds many Plugins but
 // exactly one version of each, so a report for a Plugin already present is an
 // in-place replacement, never a second row.
 
