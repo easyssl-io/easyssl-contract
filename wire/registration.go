@@ -89,6 +89,12 @@ type RegistrationResponse struct {
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
+	// OrganizationName is what the console calls the organization this host now
+	// belongs to. Sent so the host can say where it is registered without a
+	// second call, in the installer's own output, in `easyssl-agent status` and
+	// in the uninstall prompt, which otherwise says "the organization" to
+	// somebody who may administer several.
+	OrganizationName string `json:"organizationName,omitempty"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
@@ -105,6 +111,9 @@ type CheckinRequest struct {
 type RegistrationStatus struct {
 	Status      string `json:"status"`
 	DisplayName string `json:"displayName"`
+	// OrganizationName as above: an Agent registered before this field existed
+	// learns it here, on the first read after the Server is updated.
+	OrganizationName string `json:"organizationName,omitempty"`
 }
 
 // CheckinResponse reports the current status, the display name the console
@@ -113,6 +122,9 @@ type CheckinResponse struct {
 	Status          string `json:"status"`
 	DisplayName     string `json:"displayName"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
+	// OrganizationName as above, so a rename in the console reaches the host on
+	// its next check-in rather than staying wrong until it re-registers.
+	OrganizationName string `json:"organizationName,omitempty"`
 }
 
 // ErrorResponse is the JSON body returned with a non-2xx status; Code is one of
