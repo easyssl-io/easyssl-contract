@@ -80,12 +80,15 @@ type RegistrationRequest struct {
 
 // RegistrationResponse carries the one-time bearer token (transmitted only
 // here), the Server-minted Agent ID the Agent persists, plus the initial
-// status and the poll cadence the Agent should use.
+// status, the poll cadence the Agent should use, and the web-console
+// Marketplace URL to show before the operator may interrupt the authorization
+// wait. MarketplaceURL is optional for compatibility with older Servers.
 type RegistrationResponse struct {
 	AgentToken      string `json:"agentToken"`
 	AgentID         string `json:"agentId"`
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
+	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
