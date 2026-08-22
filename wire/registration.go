@@ -95,6 +95,11 @@ type RegistrationResponse struct {
 	// in the uninstall prompt, which otherwise says "the organization" to
 	// somebody who may administer several.
 	OrganizationName string `json:"organizationName,omitempty"`
+	// OrganizationID is the console's public id for it (`org-…`). Sent beside
+	// the name because the name is not unique: every account starts with one
+	// called "Default organization", so the name alone cannot tell an operator
+	// which one a host joined.
+	OrganizationID string `json:"organizationId,omitempty"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
@@ -114,6 +119,7 @@ type RegistrationStatus struct {
 	// OrganizationName as above: an Agent registered before this field existed
 	// learns it here, on the first read after the Server is updated.
 	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
 // CheckinResponse reports the current status, the display name the console
@@ -123,8 +129,11 @@ type CheckinResponse struct {
 	DisplayName     string `json:"displayName"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	// OrganizationName as above, so a rename in the console reaches the host on
-	// its next check-in rather than staying wrong until it re-registers.
+	// its next check-in rather than staying wrong until it re-registers. The id
+	// never changes, and rides along so a host registered before these fields
+	// existed learns both at once.
 	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
 // ErrorResponse is the JSON body returned with a non-2xx status; Code is one of
