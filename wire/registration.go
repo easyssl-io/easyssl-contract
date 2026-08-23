@@ -80,12 +80,26 @@ type RegistrationRequest struct {
 
 // RegistrationResponse carries the one-time bearer token (transmitted only
 // here), the Server-minted Agent ID the Agent persists, plus the initial
-// status and the poll cadence the Agent should use.
+// status, the poll cadence the Agent should use, and the web-console
+// Marketplace URL to show before the operator may interrupt the authorization
+// wait. MarketplaceURL is optional for compatibility with older Servers.
 type RegistrationResponse struct {
 	AgentToken      string `json:"agentToken"`
 	AgentID         string `json:"agentId"`
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
+	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
+	// OrganizationName is what the console calls the organization this host now
+	// belongs to. Sent so the host can say where it is registered without a
+	// second call, in the installer's own output, in `easyssl-agent status` and
+	// in the uninstall prompt, which otherwise says "the organization" to
+	// somebody who may administer several.
+	OrganizationName string `json:"organizationName,omitempty"`
+	// OrganizationID is the console's public id for it (`org-…`). Sent beside
+	// the name because the name is not unique: every account starts with one
+	// called "Default organization", so the name alone cannot tell an operator
+	// which one a host joined.
+	OrganizationID string `json:"organizationId,omitempty"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
@@ -102,6 +116,10 @@ type CheckinRequest struct {
 type RegistrationStatus struct {
 	Status      string `json:"status"`
 	DisplayName string `json:"displayName"`
+	// OrganizationName as above: an Agent registered before this field existed
+	// learns it here, on the first read after the Server is updated.
+	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
 // CheckinResponse reports the current status, the display name the console
@@ -110,6 +128,12 @@ type CheckinResponse struct {
 	Status          string `json:"status"`
 	DisplayName     string `json:"displayName"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
+	// OrganizationName as above, so a rename in the console reaches the host on
+	// its next check-in rather than staying wrong until it re-registers. The id
+	// never changes, and rides along so a host registered before these fields
+	// existed learns both at once.
+	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
 // ErrorResponse is the JSON body returned with a non-2xx status; Code is one of
