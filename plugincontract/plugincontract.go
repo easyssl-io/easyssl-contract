@@ -54,7 +54,8 @@ const (
 //   - `backticks` set a span as code. Use them for anything a reader would
 //     type, copy or look for on a host: a command, a path, an environment
 //     variable, a flag.
-//   - **double asterisks** set a span bold.
+//   - **double asterisks** set a span bold. A code span may sit inside a bold
+//     span, and keeps its backticks' meaning there; bold does not nest.
 //   - a blank line separates paragraphs; a single line break is kept as one.
 //
 // Nothing else is interpreted. HTML in particular is shown as the characters
