@@ -47,6 +47,22 @@ const (
 // versions — while Label and Description may change freely, nothing being
 // stored against them. Required with an empty Default means the Plugin cannot
 // know the value and someone must supply one before a deployment can run.
+//
+// Description, here and on DescribeResponse, is written in a small Markdown
+// subset, which is all the console renders:
+//
+//   - `backticks` set a span as code. Use them for anything a reader would
+//     type, copy or look for on a host: a command, a path, an environment
+//     variable, a flag.
+//   - **double asterisks** set a span bold. A code span may sit inside a bold
+//     span, and keeps its backticks' meaning there; bold does not nest.
+//   - a blank line separates paragraphs; a single line break is kept as one.
+//
+// Nothing else is interpreted. HTML in particular is shown as the characters
+// typed, never rendered, because a Plugin's text is somebody else's text once
+// Plugins are published and the console must not carry its markup. Markdown
+// rather than HTML for the same reason: a subset this small has nothing to
+// sanitize.
 type SettingDeclaration struct {
 	Key         string `json:"key"`
 	Label       string `json:"label"`
@@ -71,7 +87,8 @@ type DescribeResponse struct {
 	// a person choosing between Plugins can read. The settings each describe
 	// one value; nothing until now described the Plugin, so a page about one
 	// could only list what it could be configured with. Optional: a Plugin that
-	// says nothing is shown without it rather than with an empty line.
+	// says nothing is shown without it rather than with an empty line. Same
+	// Markdown subset as SettingDeclaration.Description.
 	Description string               `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
 }
