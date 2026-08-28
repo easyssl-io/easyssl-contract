@@ -13,7 +13,9 @@ package plugincontract
 
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
-// the fields it does not recognize.
+// the fields it does not recognize. Before the first external release it
+// remains at the unpublished 0.0.1 baseline; those bump rules apply after that
+// release.
 const ContractVersion = "0.0.1"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin

@@ -12,10 +12,14 @@ the Agent or the Server instead.
 
 ## Code Review Rules
 
-This module is a published interface between two independently deployed
+This module is the public interface between two independently deployed
 programs. An Agent already installed on a customer host cannot be force-upgraded,
 so one compiled against an older version of this module MUST keep working
 against a newer Server. Flag any of the following.
+
+Neither contract has been externally published yet. `ProtocolVersion` and
+`ContractVersion` remain at `0.0.1` until their first external release; the
+MAJOR/MINOR/BUILD rules below govern changes starting with that release.
 
 - **Breaking a deployed Agent without a MAJOR bump**: removing a field, renaming
   a JSON tag, changing a type, narrowing the values a field may hold, or making
