@@ -45,5 +45,5 @@ in the small Markdown subset stated on `SettingDeclaration.Description`:
 backtick spans for anything a reader would type or look for, `**bold**`, a blank
 line between paragraphs, a single line break kept as one, and nothing else. HTML
 is shown as the characters typed, never rendered. A plugin's text is somebody
-else's text once plugins are published, and a console must not carry its
+else's text once plugins are published, and a web console must not carry its
 markup; a subset this small has nothing to sanitize.

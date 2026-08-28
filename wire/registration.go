@@ -5,7 +5,7 @@ package wire
 // Agents cannot be force-upgraded, so new fields are optional and existing
 // ones never change meaning.
 
-// Agent-facing route paths. None carries the console session cookie:
+// Agent-facing route paths. None carries the web console session cookie:
 // registration is gated by the shared organization registration key, and the
 // other routes by the per-Agent bearer token.
 const (
@@ -67,7 +67,7 @@ type Diagnostics struct {
 // registration — the Server mints the Agent's public identifier (`agnt-` plus
 // 14 base32 characters) and returns it — and carries the persisted identifier
 // on a reinstall, so the Server updates that Agent instead of creating a
-// second one. It is the same identifier the console shows; an Agent has no
+// second one. It is the same identifier the web console shows; an Agent has no
 // separate machine-facing identity.
 type RegistrationRequest struct {
 	RegistrationKey string      `json:"registrationKey"`
@@ -89,13 +89,13 @@ type RegistrationResponse struct {
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
-	// OrganizationName is what the console calls the organization this host now
+	// OrganizationName is what the web console calls the organization this host now
 	// belongs to. Sent so the host can say where it is registered without a
 	// second call, in the installer's own output, in `easyssl-agent status` and
 	// in the uninstall prompt, which otherwise says "the organization" to
 	// somebody who may administer several.
 	OrganizationName string `json:"organizationName,omitempty"`
-	// OrganizationID is the console's public id for it (`org-…`). Sent beside
+	// OrganizationID is the web console's public id for it (`org-…`). Sent beside
 	// the name because the name is not unique: every account starts with one
 	// called "Default organization", so the name alone cannot tell an operator
 	// which one a host joined.
@@ -122,13 +122,13 @@ type RegistrationStatus struct {
 	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
-// CheckinResponse reports the current status, the display name the console
+// CheckinResponse reports the current status, the display name the web console
 // shows, and the next poll cadence (short while pending, longer once active).
 type CheckinResponse struct {
 	Status          string `json:"status"`
 	DisplayName     string `json:"displayName"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
-	// OrganizationName as above, so a rename in the console reaches the host on
+	// OrganizationName as above, so a rename in the web console reaches the host on
 	// its next check-in rather than staying wrong until it re-registers. The id
 	// never changes, and rides along so a host registered before these fields
 	// existed learns both at once.

@@ -49,7 +49,7 @@ const (
 // know the value and someone must supply one before a deployment can run.
 //
 // Description, here and on DescribeResponse, is written in a small Markdown
-// subset, which is all the console renders:
+// subset, which is all the web console renders:
 //
 //   - `backticks` set a span as code. Use them for anything a reader would
 //     type, copy or look for on a host: a command, a path, an environment
@@ -60,7 +60,7 @@ const (
 //
 // Nothing else is interpreted. HTML in particular is shown as the characters
 // typed, never rendered, because a Plugin's text is somebody else's text once
-// Plugins are published and the console must not carry its markup. Markdown
+// Plugins are published and the web console must not carry its markup. Markdown
 // rather than HTML for the same reason: a subset this small has nothing to
 // sanitize.
 type SettingDeclaration struct {
