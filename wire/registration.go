@@ -6,7 +6,7 @@ package wire
 // ones never change meaning.
 
 // Agent-facing route paths. None carries the web console session cookie:
-// registration is gated by the shared organization registration key, and the
+// registration is gated by the shared Organization registration key, and the
 // other routes by the per-Agent bearer token.
 const (
 	// RouteRegistrations is the check-in that creates a pending Agent and, on
@@ -19,7 +19,7 @@ const (
 	// Agent can ask what the Server currently considers it to be; DELETE
 	// removes it, which is how an Agent unregisters itself when uninstalling,
 	// dropping the Agent and its token so the host disappears from the
-	// organization without the operator removing it from the web console.
+	// Organization without the operator removing it from the web console.
 	RouteRegistration = "/api/v1/agent/registration"
 )
 
@@ -27,11 +27,11 @@ const (
 // programmatically rather than parsing prose.
 const (
 	// CodeInvalidRegistrationKey: the presented registration key matched no
-	// organization (registration rejected, 401).
+	// Organization (registration rejected, 401).
 	CodeInvalidRegistrationKey = "invalid_registration_key"
 	// CodeAgentIDTaken: the presented Agent ID names an Agent that cannot
 	// be re-registered with this key — a live row, or a removed one claimed
-	// with another organization's key (409).
+	// with another Organization's key (409).
 	CodeAgentIDTaken = "agent_id_taken"
 	// CodeUnknownAgentID: the presented Agent ID names no Agent. Only the
 	// Server mints identifiers, so an unknown one is stale local state (a
@@ -63,7 +63,7 @@ type Diagnostics struct {
 }
 
 // RegistrationRequest is the Agent's first contact: it proposes a name and
-// presents the organization's registration key. AgentID is empty on a fresh
+// presents the Organization's registration key. AgentID is empty on a fresh
 // registration — the Server mints the Agent's public identifier (`agnt-` plus
 // 14 base32 characters) and returns it — and carries the persisted identifier
 // on a reinstall, so the Server updates that Agent instead of creating a
@@ -89,10 +89,10 @@ type RegistrationResponse struct {
 	Status          string `json:"status"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
-	// OrganizationName is what the web console calls the organization this host now
+	// OrganizationName is what the web console calls the Organization this host now
 	// belongs to. Sent so the host can say where it is registered without a
 	// second call, in the installer's own output, in `easyssl-agent status` and
-	// in the uninstall prompt, which otherwise says "the organization" to
+	// in the uninstall prompt, which otherwise says "the Organization" to
 	// somebody who may administer several.
 	OrganizationName string `json:"organizationName,omitempty"`
 	// OrganizationID is the web console's public id for it (`org-…`). Sent beside
