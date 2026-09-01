@@ -6,7 +6,7 @@ package wire
 // the Agent learns what to sign and hands back the result.
 //
 // Both routes carry the per-Agent bearer token and answer only the Agent
-// named on the certificate. To any other Agent, its own organization's
+// named on the certificate. To any other Agent, its own Organization's
 // included, the certificate is indistinguishable from one that does not exist,
 // the same no-probing posture the check-in takes with unknown tokens.
 

@@ -13,8 +13,10 @@ package plugincontract
 
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
-// the fields it does not recognize.
-const ContractVersion = "1.1.0"
+// the fields it does not recognize. Before the first external release it
+// remains at the unpublished 0.0.1 baseline; those bump rules apply after that
+// release.
+const ContractVersion = "0.0.1"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
@@ -49,7 +51,7 @@ const (
 // know the value and someone must supply one before a deployment can run.
 //
 // Description, here and on DescribeResponse, is written in a small Markdown
-// subset, which is all the console renders:
+// subset, which is all the web console renders:
 //
 //   - `backticks` set a span as code. Use them for anything a reader would
 //     type, copy or look for on a host: a command, a path, an environment
@@ -60,7 +62,7 @@ const (
 //
 // Nothing else is interpreted. HTML in particular is shown as the characters
 // typed, never rendered, because a Plugin's text is somebody else's text once
-// Plugins are published and the console must not carry its markup. Markdown
+// Plugins are published and the web console must not carry its markup. Markdown
 // rather than HTML for the same reason: a subset this small has nothing to
 // sanitize.
 type SettingDeclaration struct {

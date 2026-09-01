@@ -12,10 +12,14 @@ the Agent or the Server instead.
 
 ## Code Review Rules
 
-This module is a published interface between two independently deployed
+This module is the public interface between two independently deployed
 programs. An Agent already installed on a customer host cannot be force-upgraded,
 so one compiled against an older version of this module MUST keep working
 against a newer Server. Flag any of the following.
+
+Neither contract has been externally published yet. `ProtocolVersion` and
+`ContractVersion` remain at `0.0.1` until their first external release; the
+MAJOR/MINOR/BUILD rules below govern changes starting with that release.
 
 - **Breaking a deployed Agent without a MAJOR bump**: removing a field, renaming
   a JSON tag, changing a type, narrowing the values a field may hold, or making
@@ -33,17 +37,18 @@ against a newer Server. Flag any of the following.
 
 ## Conventions
 
-American English. "Agent" and "Server" are capitalized when they mean the
-easySSL components, so that a reader can tell them from an ordinary agent or an
-ordinary server. A third-party ACME client stays lowercase, being somebody
-else's software. This repository is public and self-contained: never cite a
-document, identifier, or issue that lives in a private repository. State the
-property directly instead.
+American English. Capitalize Organization, Agent, Server, Plugin, Certificate,
+Target and Deployment whenever they name easySSL's own records or components;
+write "web console" in full for easySSL's browser UI. Keep a genuinely generic
+technical role lowercase, such as an ACME client or a CNAME target. This
+repository is public and self-contained: never cite a document, identifier, or
+issue that lives in a private repository. State the property directly instead.
 
 A `Description`, on a `SettingDeclaration` or a `DescribeResponse`, is written
 in the small Markdown subset stated on `SettingDeclaration.Description`:
 backtick spans for anything a reader would type or look for, `**bold**`, a blank
 line between paragraphs, a single line break kept as one, and nothing else. HTML
-is shown as the characters typed, never rendered. A plugin's text is somebody
-else's text once plugins are published, and a console must not carry its
-markup; a subset this small has nothing to sanitize.
+is shown as the characters typed, never rendered. A Plugin's text is somebody
+else's text once Plugins are published and the web console must not carry its
+markup. Markdown rather than HTML for the same reason: a subset this small has
+nothing to sanitize.
