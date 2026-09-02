@@ -146,6 +146,34 @@ type CheckinResponse struct {
 	// existed learns both at once.
 	OrganizationName string `json:"organizationName,omitempty"`
 	OrganizationID   string `json:"organizationId,omitempty"`
+	// PendingCommands is how many commands the Server is still waiting for this
+	// Agent to finish, counted at the moment of the check-in. It exists so an
+	// idle Agent can skip the reconcile fetch that follows a check-in, which on
+	// a fleet that is mostly idle is one request per Agent per cadence
+	// answering with an empty list.
+	//
+	// It is a count and deliberately not the commands themselves. The list is
+	// fetched from RouteCommands and nowhere else, so there is exactly one
+	// authoritative read of what is outstanding; a copy carried here could
+	// disagree with it, which is the same reason the event stream carries an id
+	// rather than the work.
+	//
+	// A pointer, because nil and zero mean opposite things. nil is a Server
+	// that does not report this, and the Agent must fetch as it always did; 0
+	// is a Server saying there is nothing, and the Agent may skip. Reading a
+	// missing field as zero would make a newer Agent stop fetching from an
+	// older Server, which is exactly the break this protocol's additive rule
+	// exists to prevent.
+	//
+	// It is advisory in one direction only: it may be stale by the time the
+	// Agent reads it, because a command can be created immediately after the
+	// count. That costs at most one cadence, since the event stream nudges and
+	// the next check-in counts again. It is never used to conclude that a
+	// command exists, only that none did.
+	//
+	// Absent while the Agent is pending: every command route refuses a pending
+	// Agent, so it has nothing to fetch and nothing to skip.
+	PendingCommands *int `json:"pendingCommands,omitempty"`
 }
 
 // ErrorResponse is the JSON body returned with a non-2xx status; Code is one of
