@@ -104,8 +104,20 @@ type RegistrationResponse struct {
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
 // the Authorization header, not here.
+//
+// Both fields are what this host is running now, and both are reported on every
+// poll rather than at registration alone. A host is upgraded in place by
+// re-running the installer, which keeps its token and therefore never
+// re-registers, so the check-in is the only route by which a new version can
+// reach the Server. Without it the web console shows the version the host had
+// when it first registered, under a footnote saying the Agent reported it.
+//
+// An Agent older than this field sends no ProtocolVersion at all. The Server
+// therefore keeps what it stored rather than overwriting it with the empty
+// string, which is the whole of what makes the addition backward compatible.
 type CheckinRequest struct {
-	AgentVersion string `json:"agentVersion"`
+	AgentVersion    string `json:"agentVersion"`
+	ProtocolVersion string `json:"protocolVersion,omitempty"`
 }
 
 // RegistrationStatus is the read-only view of an Agent's own registration,
