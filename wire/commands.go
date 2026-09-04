@@ -65,18 +65,22 @@ const (
 // and is discarded rather than run late.
 const CodeCommandExpired = "command_expired"
 
-// EventCommand is the SSE event name carrying a command id. It is the only
-// event type on the stream today; an unknown event name is ignored, the same
-// way an unknown command type is.
+// EventCommand is the SSE event name that tells an Agent something is waiting
+// for it. It is the only event type on the stream today; an unknown event name
+// is ignored, the same way an unknown command type is.
+//
+// It carries no body. `data: {}` is sent because the SSE grammar dispatches an
+// event only when a data field is present, and there is nothing to put in it:
+// the Agent answers this by reading its outstanding commands over REST, which
+// is the only path that also delivers whatever it missed while disconnected.
+//
+// It used to carry the command's id, and nothing ever read it. That is not
+// merely waste: an id in the event invites acting on that one command and
+// skipping the reconcile, which works in testing and silently loses work in
+// production the first time an event goes missing. The Agent carried a comment
+// warning against exactly that, and an event with nothing in it cannot tempt
+// anyone.
 const EventCommand = "command"
-
-// CommandEvent is the body of an EventCommand. It carries an id and nothing
-// else on purpose: putting the work in the event would create a second copy of
-// it that could disagree with the stored one, and would mean an older Agent
-// receiving a payload it cannot interpret.
-type CommandEvent struct {
-	CommandID string `json:"commandId"`
-}
 
 // Command is one instruction for an Agent, as returned by RouteCommands. RefID
 // names the resource holding the actual work; the Agent fetches that resource

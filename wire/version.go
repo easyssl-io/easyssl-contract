@@ -5,6 +5,13 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 1.0.0 empties the command event: it carried an id no Agent ever read, and an
+// Agent that acted on that id instead of reconciling would lose work whenever
+// an event went missing. Breaking, so MAJOR: a Server on 1.0.0 sends `data: {}`
+// where a 0.x Agent expects an id, and that Agent skips the event entirely,
+// falling back to its check-in. Nothing is published yet, so no such Agent
+// exists outside this repository.
+//
 // 0.2.0 adds PendingCommands to CheckinResponse, letting an Agent skip its
 // reconcile fetch when the Server has nothing outstanding for it. Additive, so
 // MINOR again: the field is a pointer and its absence means "this Server does
@@ -16,4 +23,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "0.2.0"
+const ProtocolVersion = "1.0.0"
