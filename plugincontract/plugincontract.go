@@ -129,7 +129,13 @@ type InstallRequest struct {
 type InstallResponse struct {
 	ContractVersion string `json:"contractVersion"`
 	OK              bool   `json:"ok"`
-	Output          string `json:"output"`
+	// Output is a transcript, not prose: what ran on the host and what it
+	// printed, in the order it happened. It is deliberately not the Markdown
+	// subset a Plugin's description is written in, and must not be rendered as
+	// one — its own line breaks and alignment are the content, and a `#`
+	// beginning a line of shell output is a comment the host printed rather
+	// than a heading somebody wrote.
+	Output string `json:"output"`
 }
 
 // SummarySetting returns the key of the setting an unlabeled installation point
