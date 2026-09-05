@@ -117,26 +117,31 @@ type InstallRequest struct {
 	Settings map[string]string `json:"settings"`
 }
 
-// InstallResponse is OpInstall's answer. OK is the deployment's outcome;
-// Output is one text, whatever the Plugin chooses to say about what it did —
-// exit statuses of inner commands live inside it, never as fields, because the
-// commands ran inside the Plugin and only this answer crosses back.
+// OpInstall answers with the process itself: exit 0 means the Certificate is
+// installed, anything else means it is not, stdout is what happened for a
+// person to read, and stderr is diagnostics. There is no response document.
 //
-// The process exit code is transport only: exit 0 with OK false is a
-// deployment that failed, while a non-zero exit or unparseable stdout is a
-// Plugin failure the Agent reports as the deployment's failure with whatever
-// it captured.
-type InstallResponse struct {
-	ContractVersion string `json:"contractVersion"`
-	OK              bool   `json:"ok"`
-	// Output is a transcript, not prose: what ran on the host and what it
-	// printed, in the order it happened. It is deliberately not the Markdown
-	// subset a Plugin's description is written in, and must not be rendered as
-	// one — its own line breaks and alignment are the content, and a `#`
-	// beginning a line of shell output is a comment the host printed rather
-	// than a heading somebody wrote.
-	Output string `json:"output"`
-}
+// There was one, carrying `ok` and `output`, and it earned its place while the
+// Deployment record needed structure the process could not give. The record
+// now keeps the exit status, the duration and both streams itself, so the
+// document repeated what the Agent already had — in a form free to contradict
+// it. A Plugin could exit 0 and say it failed, or exit 3 and say it worked, and
+// something had to decide which to believe.
+//
+// What that field could say and an exit code cannot is "the Plugin worked and
+// the install did not". It is not lost, it moved: a Plugin says so in its own
+// output, in its own words, which is where a reader looks anyway. What is gone
+// is a Plugin's ability to claim one thing while its exit status says another.
+//
+// The cost, stated because it is the one that matters later: there is no
+// envelope to add a field to. A Plugin that must one day report structured
+// facts about what it changed needs a mechanism that does not exist here, and
+// once this contract is published, reintroducing one is a breaking change for
+// every Plugin. Nothing wants it today.
+//
+// `describe` keeps its JSON, because it genuinely returns structure. The
+// asymmetry is the two operations being different in kind: one answers a
+// question, the other does work.
 
 // SummarySetting returns the key of the setting an unlabeled installation point
 // is named by, or "" when the Plugin declares none. Meaningful only on a

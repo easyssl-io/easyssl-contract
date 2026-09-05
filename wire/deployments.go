@@ -88,23 +88,36 @@ type DeploymentResult struct {
 // which never crosses to the Server in either direction; a stdin field added
 // here for symmetry would undo the one property the whole key design rests on.
 //
-// Both streams are bounded by the Agent and are reported after its private-key
-// redaction, because a Plugin that echoes its request or dumps its environment
-// on failure is how a key reaches its own output.
+// Output is redacted of private keys and bounded by the Agent, because a Plugin
+// that echoes its request or dumps its environment on failure is how a key
+// reaches its own output.
 type PluginRun struct {
 	ExitStatus int   `json:"exitStatus"`
 	DurationMs int64 `json:"durationMs"`
-	// Stdout is the Plugin's answer: normally one JSON document, which is why
-	// nothing here interprets it. Omitted when the Plugin printed nothing.
-	Stdout string `json:"stdout,omitempty"`
-	// Stderr is the Plugin's own diagnostics, which is where a broken Plugin
-	// explains itself. Omitted when it wrote none.
-	Stderr string `json:"stderr,omitempty"`
+	// Output is both streams in the order the Agent received them, each chunk
+	// saying which one it came from. One ordered list rather than two strings,
+	// because a message on stderr means something quite different before a line
+	// of stdout than after it, and two strings cannot say which came first.
+	//
+	// Chunks rather than lines: consecutive lines from the same stream are one
+	// entry, so a Plugin that writes only to stdout produces exactly one.
+	Output []OutputChunk `json:"output,omitempty"`
 	// StdoutBytes and StderrBytes are what the Plugin produced, which is not
-	// always what the fields above carry: a stream past the Agent's bound is
-	// cut. Counts rather than a `truncated` flag so there is no boolean that
-	// can disagree with the text beside it — a string shorter than its count
-	// is a stream that was clipped.
+	// always what Output carries: a stream past the Agent's bound is cut.
+	// Counts rather than a `truncated` flag so there is no boolean that can
+	// disagree with the text beside it.
 	StdoutBytes int `json:"stdoutBytes"`
 	StderrBytes int `json:"stderrBytes"`
+}
+
+// Stream names which of a Plugin's two outputs a chunk came from.
+const (
+	StreamStdout = "stdout"
+	StreamStderr = "stderr"
+)
+
+// OutputChunk is a run of consecutive lines from one stream.
+type OutputChunk struct {
+	Stream string `json:"stream"`
+	Text   string `json:"text"`
 }

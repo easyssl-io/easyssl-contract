@@ -5,6 +5,13 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 3.0.0 drops the Plugin's response document and reports the run as the
+// process gave it. A Plugin now answers OpInstall with an exit status and its
+// two streams, so DeploymentResult.OK is exitStatus == 0 rather than a field a
+// Plugin set, and PluginRun carries Output — both streams interleaved in the
+// order they arrived, each chunk naming its stream — in place of two separate
+// strings that could not say which came first. Breaking twice over, so MAJOR.
+//
 // 2.0.0 replaces DeploymentResult's Output and Message with AgentMessage and a
 // PluginRun holding the exit status, the duration and both streams with their
 // produced sizes. Breaking, so MAJOR. Output and Message could not say which
@@ -32,4 +39,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "2.0.0"
+const ProtocolVersion = "3.0.0"
