@@ -6,7 +6,7 @@ package wire
 // backward-compatible fixes.
 //
 // 3.0.0 drops the Plugin's response document and reports the run as the
-// process gave it. A Plugin now answers OpInstall with an exit status and its
+// process gave it. A Plugin now answers the deploy operation with an exit status and its
 // two streams, so DeploymentResult.OK is exitStatus == 0 rather than a field a
 // Plugin set, and PluginRun carries Output — both streams interleaved in the
 // order they arrived, each chunk naming its stream — in place of two separate

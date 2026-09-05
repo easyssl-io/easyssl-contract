@@ -29,10 +29,19 @@ const (
 	// reports the answer to the Server, which is how the web console can show
 	// and configure a Plugin's settings without ever reaching the host.
 	OpDescribe = "describe"
-	// OpInstall performs one certificate installation. Everything that happens
-	// on the host happens inside this one call; the Agent sees only the
-	// response.
-	OpInstall = "install"
+	// OpDeploy carries out one Deployment: it puts a Certificate onto whatever
+	// the Plugin installs onto, and reloads whatever has to be reloaded.
+	// Everything that happens on the host happens inside this one call.
+	//
+	// It is named for the Deployment record it carries out, not for what it
+	// does to the Certificate, and that is deliberate. "install" named four
+	// different acts in this system — installing the Agent, installing a
+	// Plugin, installing the systemd unit, installing a Certificate — and two
+	// of them met inside one file, where the Agent installs the Plugin
+	// executable ten lines above building this request. A reader tracing a
+	// `dep-` record from the web console through the Server to the host now
+	// finds one word the whole way.
+	OpDeploy = "deploy"
 )
 
 // Setting types. The type tells a consumer how to present and check a value; a
@@ -99,10 +108,10 @@ type DescribeResponse struct {
 	Settings    []SettingDeclaration `json:"settings"`
 }
 
-// InstallRequest is OpInstall's request. The material arrives as PEM text, not
+// DeployRequest is OpDeploy's request. The material arrives as PEM text, not
 // as paths: a Plugin that installs through an API needs no file, and one that
 // does need files creates them itself, inside WorkDir.
-type InstallRequest struct {
+type DeployRequest struct {
 	ContractVersion string `json:"contractVersion"`
 	CertificatePem  string `json:"certificatePem"`
 	ChainPem        string `json:"chainPem"`
@@ -117,7 +126,7 @@ type InstallRequest struct {
 	Settings map[string]string `json:"settings"`
 }
 
-// OpInstall answers with the process itself: exit 0 means the Certificate is
+// OpDeploy answers with the process itself: exit 0 means the Certificate is
 // installed, anything else means it is not, stdout is what happened for a
 // person to read, and stderr is diagnostics. There is no response document.
 //

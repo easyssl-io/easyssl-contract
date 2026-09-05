@@ -84,7 +84,7 @@ type DeploymentResult struct {
 // interpreted, and nothing is the Agent's own words.
 //
 // The request is deliberately absent and must stay absent. It carries the
-// Certificate's private key (plugincontract.InstallRequest.PrivateKeyPem),
+// Certificate's private key (plugincontract.DeployRequest.PrivateKeyPem),
 // which never crosses to the Server in either direction; a stdin field added
 // here for symmetry would undo the one property the whole key design rests on.
 //
