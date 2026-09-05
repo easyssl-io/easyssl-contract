@@ -11,6 +11,8 @@
 // nothing remains to read afterwards.
 package plugincontract
 
+import "strings"
+
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
 // the fields it does not recognize. Before the first external release it
@@ -74,7 +76,9 @@ type SettingDeclaration struct {
 	Required    bool   `json:"required"`
 	// Summary marks the one setting whose value an unlabeled installation
 	// point of this Plugin is known by on screen. At most one per Plugin;
-	// false everywhere means none.
+	// false everywhere means none. ValidateSettings enforces the "at most
+	// one", and both the Agent and the Server call it, so a Plugin that
+	// declares two is refused rather than having one of them chosen for it.
 	Summary bool `json:"summary"`
 }
 
@@ -126,4 +130,52 @@ type InstallResponse struct {
 	ContractVersion string `json:"contractVersion"`
 	OK              bool   `json:"ok"`
 	Output          string `json:"output"`
+}
+
+// SummarySetting returns the key of the setting an unlabeled installation point
+// is named by, or "" when the Plugin declares none. Meaningful only on a
+// declaration set that passed ValidateSettings, which is what makes "the
+// summary setting" a single thing rather than "the first of them".
+func SummarySetting(decls []SettingDeclaration) string {
+	for _, d := range decls {
+		if d.Summary {
+			return d.Key
+		}
+	}
+	return ""
+}
+
+// ValidateSettings checks what a declaration set must satisfy whoever is
+// reading it. One rule today: at most one setting may be Summary.
+//
+// It is here rather than in either caller because both the Agent, at install
+// time, and the Server, when the report arrives, have to reach the same
+// verdict. A rule enforced in one of them is a rule the other disagrees with
+// the moment somebody reaches it another way.
+//
+// Two summary settings is not a shape problem — it parses, and every field is
+// valid — which is exactly why it needs saying. Without this the Server names
+// an unlabeled Target after whichever the Plugin happened to declare first,
+// which is a choice nobody made and which changes if the Plugin's author
+// reorders its list.
+func ValidateSettings(decls []SettingDeclaration) error {
+	var summaries []string
+	for _, d := range decls {
+		if d.Summary {
+			summaries = append(summaries, d.Key)
+		}
+	}
+	if len(summaries) > 1 {
+		return &TooManySummaryError{Keys: summaries}
+	}
+	return nil
+}
+
+// TooManySummaryError names the settings that claimed it, because the Plugin's
+// author is the one who has to pick, and the keys are how they find them.
+type TooManySummaryError struct{ Keys []string }
+
+func (e *TooManySummaryError) Error() string {
+	return "plugincontract: at most one setting may be marked summary, but " +
+		strings.Join(e.Keys, ", ") + " all are"
 }
