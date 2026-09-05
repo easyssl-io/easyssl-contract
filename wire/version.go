@@ -5,6 +5,15 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 2.0.0 replaces DeploymentResult's Output and Message with AgentMessage and a
+// PluginRun holding the exit status, the duration and both streams with their
+// produced sizes. Breaking, so MAJOR. Output and Message could not say which
+// voice a reader was hearing: Message was the Agent's sentence and also the
+// container the streams were formatted into, differently for each way a run
+// could fail, so the exit status was recoverable only by parsing English and
+// nothing could be rendered as what it was. Nothing is published, so no Agent
+// or Server outside this repository speaks the old shape.
+//
 // 1.0.0 empties the command event: it carried an id no Agent ever read, and an
 // Agent that acted on that id instead of reconciling would lose work whenever
 // an event went missing. Breaking, so MAJOR: a Server on 1.0.0 sends `data: {}`
@@ -23,4 +32,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "1.0.0"
+const ProtocolVersion = "2.0.0"
