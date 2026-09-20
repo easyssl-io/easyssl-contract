@@ -5,6 +5,12 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 3.1.0 adds the host inventory: InventoryFingerprint on CheckinRequest,
+// ReportInventory on CheckinResponse, and RouteAgentInventory carrying an
+// Inventory document. Additive, so MINOR: a Server that knows the fields asks
+// Agents that send a fingerprint for the document and leaves older Agents
+// alone, and an older Server ignores the fingerprint and never asks.
+//
 // 3.0.0 drops the Plugin's response document and reports the run as the
 // process gave it. A Plugin now answers the deploy operation with an exit status and its
 // two streams, so DeploymentResult.OK is exitStatus == 0 rather than a field a
@@ -39,4 +45,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "3.0.0"
+const ProtocolVersion = "3.1.0"

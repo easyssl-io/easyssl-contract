@@ -118,6 +118,14 @@ type RegistrationResponse struct {
 type CheckinRequest struct {
 	AgentVersion    string `json:"agentVersion"`
 	ProtocolVersion string `json:"protocolVersion,omitempty"`
+	// InventoryFingerprint is InventoryFingerprint() over the host inventory
+	// the Agent computed for this check-in. The Server compares it with the
+	// one it stored and answers ReportInventory when they differ, so the
+	// check-in carries the signal and RouteAgentInventory the payload. Empty
+	// from an Agent older than the field, or from the installer's own
+	// check-in, which computes no inventory; the Server then asks the service
+	// for one on its next check-in and nothing is lost.
+	InventoryFingerprint string `json:"inventoryFingerprint,omitempty"`
 }
 
 // RegistrationStatus is the read-only view of an Agent's own registration,
@@ -146,6 +154,13 @@ type CheckinResponse struct {
 	// existed learns both at once.
 	OrganizationName string `json:"organizationName,omitempty"`
 	OrganizationID   string `json:"organizationId,omitempty"`
+	// ReportInventory asks the Agent to PUT its host inventory now: the
+	// fingerprint it sent differs from the one stored, or the Server holds no
+	// inventory for it at all, which is every Agent's first check-in after a
+	// Server that lost its data. Absent (false) otherwise, and from a Server
+	// older than the field, so an Agent never sends a document nobody asked
+	// for.
+	ReportInventory bool `json:"reportInventory,omitempty"`
 	// PendingCommands is how many commands the Server is still waiting for this
 	// Agent to finish, counted at the moment of the check-in. It exists so an
 	// idle Agent can skip the reconcile fetch that follows a check-in, which on
