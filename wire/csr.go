@@ -31,10 +31,19 @@ const KeyTypeECP256 = "ec_p256"
 // chooses. The CSR it builds carries these as SANs only, no Subject Common
 // Name, because an ACME client orders the Common Name too and an added name
 // there would be one nobody requested.
+//
+// KeyFingerprint names the key to sign with, as the keystore names it: the
+// lowercase hex SHA-256 of its SubjectPublicKeyInfo. Empty asks for a fresh
+// key. Set when the request reused an existing key, and set once a CSR has
+// been stored, so a re-run after a crash loads the key it already used rather
+// than generating another. An Agent that does not hold the named key builds
+// no CSR and never substitutes one: the Server records the fingerprint of every
+// CSR it accepts, and a CSR from a different key is rejected.
 type CSRWork struct {
-	CertificateID string   `json:"certificateId"`
-	Domains       []string `json:"domains"`
-	KeyType       string   `json:"keyType"`
+	CertificateID  string   `json:"certificateId"`
+	Domains        []string `json:"domains"`
+	KeyType        string   `json:"keyType"`
+	KeyFingerprint string   `json:"keyFingerprint,omitempty"`
 }
 
 // CSRSubmission carries the PEM CSR back. One CERTIFICATE REQUEST block,
@@ -52,9 +61,9 @@ type CSRSubmission struct {
 const (
 	// CodeCSRAlreadySubmitted (409): a CSR is already stored. Treated as
 	// success — an ECDSA re-signature never reproduces the same bytes, so an
-	// Agent re-run after a crash cannot recognize its own submission, and the
-	// stored CSR is from the same key anyway because key generation is
-	// idempotent per certificate.
+	// Agent re-run after a crash cannot recognize its own submission. The
+	// stored CSR is from the key the re-run was told to use, since CSRWork
+	// names the stored CSR's key once one exists.
 	CodeCSRAlreadySubmitted = "csr_already_submitted"
 	// CodeNotAwaitingCSR (409): the certificate is failed or issued; the
 	// instruction is stale and is discarded.

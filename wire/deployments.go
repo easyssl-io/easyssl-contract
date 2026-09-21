@@ -40,15 +40,20 @@ const (
 const CodeDeploymentFinished = "deployment_finished"
 
 // DeploymentWork is what RouteAgentDeployment answers while the deployment is
-// pending. CertificateID names the certificate whose key the Agent reads from
-// its own keystore; Settings is the Server-resolved value of every setting the
-// owning Plugin declares, snapshotted when the deployment was queued, which is
-// also what gets recorded — so what ran never depends on an edit made after
-// the user confirmed.
+// pending. KeyFingerprint names the certificate's key the way the Agent's
+// keystore names it (the lowercase hex SHA-256 of its SubjectPublicKeyInfo),
+// which is the only link between a certificate and its key: the Server keeps
+// it, the host keeps only the key. The Agent reads that key from its own
+// keystore and fails the deployment if it is not there. Settings is the
+// Server-resolved value of every setting the owning Plugin declares,
+// snapshotted when the deployment was queued, which is also what gets
+// recorded — so what ran never depends on an edit made after the user
+// confirmed.
 type DeploymentWork struct {
 	ID             string            `json:"id"`
 	State          string            `json:"state"`
 	CertificateID  string            `json:"certificateId"`
+	KeyFingerprint string            `json:"keyFingerprint,omitempty"`
 	PluginID       string            `json:"pluginId"`
 	CertificatePem string            `json:"certificatePem,omitempty"`
 	ChainPem       string            `json:"chainPem,omitempty"`

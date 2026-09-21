@@ -194,7 +194,7 @@ type DeployRequest struct {
 // once this contract is published, reintroducing one is a breaking change for
 // every Plugin. Nothing wants it today.
 //
-// `describe` keeps its JSON, because it genuinely returns structure. The
+// `discover` keeps its JSON, because it genuinely returns structure. The
 // asymmetry is the two operations being different in kind: one answers a
 // question, the other does work.
 

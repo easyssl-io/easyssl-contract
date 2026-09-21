@@ -5,6 +5,14 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 5.0.0 moves the link between a certificate and its key to the Server:
+// CSRWork.KeyFingerprint names the key to sign with (empty for a fresh one)
+// and DeploymentWork.KeyFingerprint names the key to install, so the Agent
+// keeps no record of which certificate uses which key and reads the key the
+// Server names. Breaking for the Agent, which now needs the field to deploy at
+// all, so MAJOR; nothing is published, so no Agent outside this repository
+// speaks the old shape.
+//
 // 4.0.0 moves installed Plugins into the host inventory and removes the
 // per-Plugin report route and its PluginReport: an Agent that still calls
 // `PUT /api/v1/agent/plugins/{id}` finds nothing there, and the Server learns
@@ -53,4 +61,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "4.0.0"
+const ProtocolVersion = "5.0.0"
