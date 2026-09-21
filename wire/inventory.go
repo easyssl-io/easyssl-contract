@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"sort"
 	"time"
+
+	"github.com/easyssl-io/easyssl-contract/plugincontract"
 )
 
 // RouteAgentInventory is where an Agent PUTs its whole host inventory,
@@ -14,6 +16,11 @@ import (
 // stays constant-size and this route carries the payload however large a host's
 // state grows.
 const RouteAgentInventory = "/api/v1/agent/inventory"
+
+// SettingDeclaration is the declaration a Plugin produced and the inventory
+// passes on verbatim. One definition on purpose: a second struct would let the
+// report drift from what the Plugin answered.
+type SettingDeclaration = plugincontract.SettingDeclaration
 
 // Inventory is everything an Agent observes about its own host, recomputed on
 // every check-in and never persisted on the host: the diagnostics that used to
@@ -26,7 +33,34 @@ const RouteAgentInventory = "/api/v1/agent/inventory"
 // contributor must not send the document at all (S2 FR-026).
 type Inventory struct {
 	Diagnostics Diagnostics `json:"diagnostics"`
-	Keys        []KeyInfo   `json:"keys"`
+	// Plugins is every Plugin executable on the host with what it answered to
+	// discover this run. A Plugin absent here is one the host no longer has,
+	// and the Server removes it with everything it reported.
+	Plugins []PluginInventory `json:"plugins"`
+	Keys    []KeyInfo         `json:"keys"`
+}
+
+// PluginInventory is one installed Plugin as the host sees it now: which bytes
+// it runs, and what those bytes answered to discover.
+type PluginInventory struct {
+	// ID is the Plugin's name, which is also its executable's name in the
+	// Plugin directory.
+	ID string `json:"id"`
+	// Digest is the SHA-256 of the executable as it is on disk at this run,
+	// not the catalog's figure recorded at install: the Server compares the
+	// two, and a mismatch is a binary someone replaced by hand.
+	Digest string `json:"digest"`
+	// Unobserved says discover produced nothing this run, a non-zero exit or
+	// the timeout, so the fields below are empty and Warnings names the
+	// failure. The Server keeps the last answer it received and shows the
+	// warning; the Agent keeps nothing.
+	Unobserved bool `json:"unobserved,omitempty"`
+	// The discover answer, verbatim (contracts: plugincontract.DiscoverResponse).
+	Version          string                           `json:"version,omitempty"`
+	Description      string                           `json:"description,omitempty"`
+	Declarations     []SettingDeclaration             `json:"declarations,omitempty"`
+	SuggestedTargets []plugincontract.SuggestedTarget `json:"suggestedTargets,omitempty"`
+	Warnings         []string                         `json:"warnings,omitempty"`
 }
 
 // KeyInfo is one private key in the Agent's keystore, by its public half only.
@@ -48,7 +82,7 @@ type KeyInfo struct {
 // disagree, every check-in would ask for a report, and the mechanism would
 // invert into a permanent full-inventory push that nothing reports as broken.
 //
-// Canonical form: keys sorted by fingerprint, then the JSON encoding with
+// Canonical form: keys sorted by fingerprint, Plugins by id, then the JSON encoding with
 // object members in sorted order, which encoding/json gives for a map. Times
 // are compared as RFC 3339 in UTC so a document that round-tripped through the
 // Server's clock-free storage hashes the same.
@@ -59,9 +93,15 @@ func InventoryFingerprint(inv Inventory) (string, error) {
 	for i := range keys {
 		keys[i].CreatedAt = keys[i].CreatedAt.UTC().Truncate(time.Second)
 	}
-	canon := Inventory{Diagnostics: inv.Diagnostics, Keys: keys}
+	plugins := make([]PluginInventory, len(inv.Plugins))
+	copy(plugins, inv.Plugins)
+	sort.Slice(plugins, func(i, j int) bool { return plugins[i].ID < plugins[j].ID })
+	canon := Inventory{Diagnostics: inv.Diagnostics, Plugins: plugins, Keys: keys}
 	if canon.Keys == nil {
 		canon.Keys = []KeyInfo{}
+	}
+	if canon.Plugins == nil {
+		canon.Plugins = []PluginInventory{}
 	}
 	// Through a generic value, so member order is the sorted order a map gives
 	// and not the struct's declaration order, which a field added later would

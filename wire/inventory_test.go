@@ -33,6 +33,16 @@ func TestInventoryFingerprintIsOrderAndClockIndependent(t *testing.T) {
 		t.Fatalf("fingerprint = %q, want 64 hex characters", fa)
 	}
 
+	withPlugins := b
+	withPlugins.Plugins = []PluginInventory{{ID: "nginx", Digest: "d1"}, {ID: "generic-cli", Digest: "d2"}}
+	reordered := b
+	reordered.Plugins = []PluginInventory{{ID: "generic-cli", Digest: "d2"}, {ID: "nginx", Digest: "d1"}}
+	fp1, _ := InventoryFingerprint(withPlugins)
+	fp2, _ := InventoryFingerprint(reordered)
+	if fp1 != fp2 || fp1 == fb {
+		t.Fatalf("plugin order changed the fingerprint, or plugins did not: %s %s %s", fp1, fp2, fb)
+	}
+
 	c := b
 	c.Diagnostics.Hostname = "renamed"
 	if fc, _ := InventoryFingerprint(c); fc == fb {

@@ -5,6 +5,14 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 4.0.0 moves installed Plugins into the host inventory and removes the
+// per-Plugin report route and its PluginReport: an Agent that still calls
+// `PUT /api/v1/agent/plugins/{id}` finds nothing there, and the Server learns
+// of a Plugin only from the inventory, where its absence is expressible. The
+// Plugin's answer is now the discover operation's (plugincontract 0.1.0).
+// Breaking, so MAJOR; nothing is published, so no Agent outside this
+// repository speaks the old shape.
+//
 // 3.1.0 adds the host inventory: InventoryFingerprint on CheckinRequest,
 // ReportInventory on CheckinResponse, and RouteAgentInventory carrying an
 // Inventory document. Additive, so MINOR: a Server that knows the fields asks
@@ -45,4 +53,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "3.1.0"
+const ProtocolVersion = "4.0.0"

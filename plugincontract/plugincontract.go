@@ -11,24 +11,38 @@
 // nothing remains to read afterwards.
 package plugincontract
 
-import "strings"
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
 
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
 // the fields it does not recognize. Before the first external release it
 // remains at the unpublished 0.0.1 baseline; those bump rules apply after that
 // release.
-const ContractVersion = "0.0.1"
+const ContractVersion = "0.1.0"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
 // stderr, and the Agent treats the operation as unsupported.
 const (
-	// OpDescribe asks the Plugin to identify itself and declare its settings.
-	// It takes no request body. The Agent runs it once at install time and
-	// reports the answer to the Server, which is how the web console can show
-	// and configure a Plugin's settings without ever reaching the host.
-	OpDescribe = "describe"
+	// OpDiscover asks the Plugin what it is and what it sees on the host: its
+	// identity and declared settings, and the installation points it found by
+	// parsing the host's configuration, as suggested Targets, with warnings for
+	// what it could not turn into one. It takes no request body. The Agent runs
+	// it on every check-in, never once at install, so a binary swapped by hand
+	// is read from what would run, and the answer rides the host inventory to
+	// the Server. Every Plugin implements it; one that inspects nothing answers
+	// with both lists empty.
+	//
+	// Failing to inspect the host is not a failure of the operation: a
+	// configuration the Plugin cannot read is a warning beside the
+	// declarations. A non-zero exit or a timeout is the operation producing
+	// nothing this run, which the Agent reports as the Plugin being present
+	// but unobserved.
+	OpDiscover = "discover"
 	// OpDeploy carries out one Deployment: it puts a Certificate onto whatever
 	// the Plugin installs onto, and reloads whatever has to be reloaded.
 	// Everything that happens on the host happens inside this one call.
@@ -61,7 +75,7 @@ const (
 // stored against them. Required with an empty Default means the Plugin cannot
 // know the value and someone must supply one before a deployment can run.
 //
-// Description, here and on DescribeResponse, is written in a small Markdown
+// Description, here and on DiscoverResponse, is written in a small Markdown
 // subset, which is all the web console renders:
 //
 //   - `backticks` set a span as code. Use them for anything a reader would
@@ -89,23 +103,55 @@ type SettingDeclaration struct {
 	// one", and both the Agent and the Server call it, so a Plugin that
 	// declares two is refused rather than having one of them chosen for it.
 	Summary bool `json:"summary"`
+	// Identity marks a setting whose value identifies an installation point:
+	// the Server composes a suggested Target's discovery key from the values of
+	// every Identity setting, in declaration order, and matches suggestions to
+	// Targets on it. Distinct from Summary, which is what a reader sees a Target
+	// called; the two happen to coincide for nginx. A Plugin that reports
+	// suggestions flags at least one (ValidateDiscover).
+	Identity bool `json:"identity"`
 }
 
-// DescribeResponse is OpDescribe's answer: who this build is and what it
-// declares. Version is the Plugin's own; the Agent reports it together with
-// the artifact digest, so what a host runs is always attributable.
-type DescribeResponse struct {
+// DiscoverResponse is OpDiscover's answer: who this build is, what it
+// declares, and what it found on the host.
+type DiscoverResponse struct {
 	ContractVersion string `json:"contractVersion"`
 	Name            string `json:"name"`
 	Version         string `json:"version"`
-	// Description says what this Plugin installs onto, in one or two sentences
-	// a person choosing between Plugins can read. The settings each describe
-	// one value; nothing until now described the Plugin, so a page about one
-	// could only list what it could be configured with. Optional: a Plugin that
-	// says nothing is shown without it rather than with an empty line. Same
-	// Markdown subset as SettingDeclaration.Description.
+	// Description is the build's own account of what it installs onto, in the
+	// Markdown subset the web console renders; optional.
 	Description string               `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
+	// SuggestedTargets are the installation points the Plugin parsed, each an
+	// offer to add a Target from the web console and never a Target itself.
+	// Empty for a Plugin that inspects nothing.
+	SuggestedTargets []SuggestedTarget `json:"suggestedTargets"`
+	// Warnings are what discovery saw and could not turn into a suggestion, in
+	// the Markdown subset, shown on the Agent page under the Plugin.
+	Warnings []string `json:"warnings"`
+}
+
+// SuggestedTarget is one installation point a Plugin found. It carries no
+// key of its own: the Server composes one from the Identity settings.
+type SuggestedTarget struct {
+	// PluginSettings is a value per declared setting key, opaque to the Server
+	// and resolved by the Plugin: a path arrives as the file it names, never
+	// as the spelling in the configuration. Promotion copies these into the
+	// Target.
+	PluginSettings map[string]string `json:"pluginSettings"`
+	// PluginExtraData is shown and never read: stored opaquely, never copied
+	// into a Target, never compared. Values are in the Markdown subset.
+	PluginExtraData []ExtraDatum `json:"pluginExtraData"`
+	// SuggestedDomains are the names the certificate at that point holds,
+	// addresses and wildcards included; what is requestable is the Server's
+	// rule.
+	SuggestedDomains []string `json:"suggestedDomains"`
+}
+
+// ExtraDatum is one labeled item of a suggestion's extra data.
+type ExtraDatum struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
 }
 
 // DeployRequest is OpDeploy's request. The material arrives as PEM text, not
@@ -193,6 +239,44 @@ func ValidateSettings(decls []SettingDeclaration) error {
 
 // TooManySummaryError names the settings that claimed it, because the Plugin's
 // author is the one who has to pick, and the keys are how they find them.
+// ValidateDiscover checks a whole discover answer, ValidateSettings included:
+// a Plugin that reports suggestions must flag at least one identity setting,
+// each suggestion must give every identity setting a non-empty value, and
+// must name only declared settings, since a key the declarations do not know
+// could be neither shown nor promoted.
+func ValidateDiscover(d DiscoverResponse) error {
+	if err := ValidateSettings(d.Settings); err != nil {
+		return err
+	}
+	if len(d.SuggestedTargets) == 0 {
+		return nil
+	}
+	declared := map[string]bool{}
+	var identity []string
+	for _, s := range d.Settings {
+		declared[s.Key] = true
+		if s.Identity {
+			identity = append(identity, s.Key)
+		}
+	}
+	if len(identity) == 0 {
+		return errors.New("plugincontract: a Plugin that reports suggested Targets must mark at least one setting identity")
+	}
+	for i, t := range d.SuggestedTargets {
+		for k := range t.PluginSettings {
+			if !declared[k] {
+				return fmt.Errorf("plugincontract: suggestion %d sets %q, which is not a declared setting", i, k)
+			}
+		}
+		for _, k := range identity {
+			if t.PluginSettings[k] == "" {
+				return fmt.Errorf("plugincontract: suggestion %d gives identity setting %q no value", i, k)
+			}
+		}
+	}
+	return nil
+}
+
 type TooManySummaryError struct{ Keys []string }
 
 func (e *TooManySummaryError) Error() string {
