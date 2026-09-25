@@ -17,9 +17,12 @@ const (
 	RouteCheckin = "/api/v1/agent/checkin"
 	// RouteRegistration is the Agent's own registration. GET reads it, so an
 	// Agent can ask what the Server currently considers it to be; DELETE
-	// removes it, which is how an Agent unregisters itself when uninstalling,
-	// dropping the Agent and its token so the host disappears from the
-	// Organization without the operator removing it from the web console.
+	// deactivates it, which is how an uninstalling Agent tells the Server its
+	// token is no longer in use. Deactivation invalidates the token and
+	// nothing else: the Agent's Targets and record stay, and a reactivation
+	// token minted in the web console brings the same Agent back on the same
+	// or another host. Removing the Agent for good is the operator's call in
+	// the web console, never something a host can do to its own record.
 	RouteRegistration = "/api/v1/agent/registration"
 )
 
@@ -29,15 +32,11 @@ const (
 	// CodeInvalidRegistrationKey: the presented registration key matched no
 	// Organization (registration rejected, 401).
 	CodeInvalidRegistrationKey = "invalid_registration_key"
-	// CodeAgentIDTaken: the presented Agent ID names an Agent that cannot
-	// be re-registered with this key — a live row, or a removed one claimed
-	// with another Organization's key (409).
-	CodeAgentIDTaken = "agent_id_taken"
-	// CodeUnknownAgentID: the presented Agent ID names no Agent. Only the
-	// Server mints identifiers, so an unknown one is stale local state (a
-	// reset Server, a hand-edited config), never something to register under;
-	// the host re-registers fresh after clearing it (404).
-	CodeUnknownAgentID = "unknown_agent_id"
+	// CodeInvalidReactivationToken: the presented reactivation token matched
+	// no deactivated Agent, has expired, or was already used. A reactivation
+	// token is single-use and short-lived, so the operator mints another in
+	// the web console rather than the host retrying (401).
+	CodeInvalidReactivationToken = "invalid_reactivation_token"
 	// CodeUnknownToken: the bearer token is not recognized — revoked, or the
 	// registration was rejected (an Agent cannot distinguish the two, by
 	// design) (401).
@@ -62,33 +61,50 @@ type Diagnostics struct {
 	ServiceName string `json:"serviceName"`
 }
 
-// RegistrationRequest is the Agent's first contact: it proposes a name and
-// presents the Organization's registration key. AgentID is empty on a fresh
-// registration — the Server mints the Agent's public identifier (`agnt-` plus
-// 14 base32 characters) and returns it — and carries the persisted identifier
-// on a reinstall, so the Server updates that Agent instead of creating a
-// second one. It is the same identifier the web console shows; an Agent has no
-// separate machine-facing identity.
+// RegistrationRequest is the Agent's first contact. It carries exactly one
+// credential. With the Organization's registration key it proposes a name and
+// the Server mints a new pending Agent, with a public identifier (`agnt-` plus
+// 14 base32 characters) it returns; that identifier is the same one the web
+// console shows, and an Agent has no separate machine-facing identity. With a
+// reactivation token, minted in the web console on a deactivated Agent, it
+// resumes that Agent instead: the identity, name, Targets and everything the
+// Server recorded are the deactivated Agent's, ProposedName is ignored, and the
+// Agent lands active at once, because minting the token was the operator's
+// review. A host therefore never presents an Agent ID of its own: only the
+// Server names Agents, and a host that wants to be one it was before proves it
+// with a token the operator handed it.
 type RegistrationRequest struct {
-	RegistrationKey string      `json:"registrationKey"`
-	AgentID         string      `json:"agentId,omitempty"`
-	ProposedName    string      `json:"proposedName"`
-	AgentVersion    string      `json:"agentVersion"`
-	ProtocolVersion string      `json:"protocolVersion"`
-	Diagnostics     Diagnostics `json:"diagnostics"`
+	RegistrationKey   string      `json:"registrationKey,omitempty"`
+	ReactivationToken string      `json:"reactivationToken,omitempty"`
+	ProposedName      string      `json:"proposedName"`
+	AgentVersion      string      `json:"agentVersion"`
+	ProtocolVersion   string      `json:"protocolVersion"`
+	Diagnostics       Diagnostics `json:"diagnostics"`
 }
 
 // RegistrationResponse carries the one-time bearer token (transmitted only
-// here), the Server-minted Agent ID the Agent persists, plus the initial
-// status, the poll cadence the Agent should use, and the web console
-// Marketplace URL to show before the operator may interrupt the authorization
-// wait. MarketplaceURL is optional for compatibility with older Servers.
+// here), the Agent's public ID, the status the Agent starts in (pending after a
+// registration key, active after a reactivation token), the poll cadence the
+// Agent should use, and the web console Marketplace URL to show before the
+// operator may interrupt the authorization wait. MarketplaceURL is optional
+// for compatibility with older Servers.
 type RegistrationResponse struct {
-	AgentToken      string `json:"agentToken"`
-	AgentID         string `json:"agentId"`
-	Status          string `json:"status"`
-	NextPollSeconds int    `json:"nextPollSeconds"`
-	MarketplaceURL  string `json:"marketplaceUrl,omitempty"`
+	AgentToken string `json:"agentToken"`
+	AgentID    string `json:"agentId"`
+	Status     string `json:"status"`
+	// DisplayName is what the web console calls this Agent. After a
+	// reactivation it is the deactivated Agent's name, which the host did not
+	// choose and has no other way to learn; after a fresh registration it is
+	// the name the host proposed.
+	DisplayName string `json:"displayName,omitempty"`
+	// RequiredPlugins names the Plugins this Agent's Targets are configured
+	// with, so a reactivated host can offer to install what its Deployments
+	// will need before the first push arrives and fails for want of one. Empty
+	// after a fresh registration, which has no Targets yet. Each entry is a
+	// Plugin id as the Marketplace catalog names it.
+	RequiredPlugins []string `json:"requiredPlugins,omitempty"`
+	NextPollSeconds int      `json:"nextPollSeconds"`
+	MarketplaceURL  string   `json:"marketplaceUrl,omitempty"`
 	// OrganizationName is what the web console calls the Organization this host now
 	// belongs to. Sent so the host can say where it is registered without a
 	// second call, in the installer's own output, in `easyssl-agent status` and
@@ -136,6 +152,10 @@ type CheckinRequest struct {
 type RegistrationStatus struct {
 	Status      string `json:"status"`
 	DisplayName string `json:"displayName"`
+	// AgentID is the Agent's public id, which the host keeps nowhere and
+	// learns here, so `easyssl-agent status` can name what the web console
+	// calls this host.
+	AgentID string `json:"agentId,omitempty"`
 	// OrganizationName as above: an Agent registered before this field existed
 	// learns it here, on the first read after the Server is updated.
 	OrganizationName string `json:"organizationName,omitempty"`

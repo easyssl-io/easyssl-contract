@@ -5,6 +5,21 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 6.0.0 makes the Server the only namer of Agents. RegistrationRequest loses
+// AgentID: a host reinstalling on top of a removed identity used to present
+// the id it remembered and be revived under it, and the operator then had to
+// judge a name and diagnostics the host itself supplied. It gains
+// ReactivationToken, a single-use, short-lived credential the operator mints
+// in the web console on a deactivated Agent and hands to the host, which then
+// resumes that Agent active at once. RegistrationResponse gains DisplayName
+// and RequiredPlugins, both for the reactivated host, which did not choose
+// its name and inherits Targets whose Plugins it may not have. The
+// agent_id_taken and unknown_agent_id codes go with the field and
+// invalid_reactivation_token arrives. DELETE RouteRegistration now
+// deactivates the Agent rather than removing it, so the Targets survive an
+// uninstall and a later reactivation. Breaking, so MAJOR; nothing is
+// published, so no Agent outside this repository speaks the old shape.
+//
 // 5.0.0 moves the link between a certificate and its key to the Server:
 // CSRWork.KeyFingerprint names the key to sign with (empty for a fresh one)
 // and DeploymentWork.KeyFingerprint names the key to install, so the Agent
@@ -61,4 +76,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "5.0.0"
+const ProtocolVersion = "6.0.0"
