@@ -162,6 +162,13 @@ type SuggestedTarget struct {
 	// addresses and wildcards included; what is requestable is the Server's
 	// rule.
 	SuggestedDomains []string `json:"suggestedDomains"`
+	// KeyType names the algorithm of the key the certificate at that point
+	// uses, when the Plugin can tell: one of ec_p256, ec_p384, rsa_2048,
+	// rsa_3072 or rsa_4096, the key types a Certificate can be requested with.
+	// Empty when unknown or another algorithm. Typed rather than extra data
+	// because the Server acts on it: a Certificate requested for the Target
+	// starts with this algorithm. Optional.
+	KeyType string `json:"keyType,omitempty"`
 }
 
 // ExtraDatum is one labeled item of a suggestion's extra data.
