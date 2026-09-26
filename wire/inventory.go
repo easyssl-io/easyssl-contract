@@ -69,7 +69,7 @@ type KeyInfo struct {
 	// hex, which is also the key file's name on the host and what the Server
 	// computes from a CSR or certificate without seeing the key.
 	Fingerprint string `json:"fingerprint"`
-	// Algorithm as the Server names key types: "ec_p256" today.
+	// Algorithm is the key type, as KeyTypeOf names it.
 	Algorithm string `json:"algorithm"`
 	// CreatedAt is when the key file was created, as the host reports it.
 	CreatedAt time.Time `json:"createdAt"`

@@ -5,6 +5,10 @@ package wire
 // changes, MINOR for additive backward-compatible features, BUILD for
 // backward-compatible fixes.
 //
+// 6.1.0 adds the key types KeyTypeECP384, KeyTypeRSA2048, KeyTypeRSA3072 and
+// KeyTypeRSA4096 beside KeyTypeECP256, so a Certificate can carry any key
+// Let's Encrypt accepts. Additive, so MINOR.
+//
 // 6.0.0 makes the Server the only namer of Agents. RegistrationRequest loses
 // AgentID: a host reinstalling on top of a removed identity used to present
 // the id it remembered and be revived under it, and the operator then had to
@@ -76,4 +80,4 @@ package wire
 // it is unaffected. This is the first bump off the unpublished 0.0.1 baseline,
 // and it is what makes the value worth reporting on a check-in at all: until
 // there were two of them, a stale record and a current one could not differ.
-const ProtocolVersion = "6.0.0"
+const ProtocolVersion = "6.1.0"
