@@ -75,6 +75,22 @@ const (
 // stored against them. Required with an empty Default means the Plugin cannot
 // know the value and someone must supply one before a deployment can run.
 //
+// A later build of a Plugin MUST accept every setting an earlier build
+// declared, because Targets configured under the earlier build keep their
+// values and resolve against whatever build the host holds now, and a
+// Deployment queued before an upgrade runs on the new build with the settings
+// resolved before it:
+//
+//   - a Key keeps its meaning and is never renamed or reused;
+//   - a setting a later build adds is optional, or has a Default that
+//     reproduces the earlier behavior, and deploy treats it as absent when a
+//     request does not carry it;
+//   - a setting a later build drops is ignored when a request still carries it.
+//
+// A build that cannot honor this is a new Plugin, under a new name. Adding a
+// Required setting with no Default is allowed but makes every existing Target
+// of the Plugin undeployable until someone sets it.
+//
 // Description, here and on DiscoverResponse, is written in a small Markdown
 // subset, which is all the web console renders:
 //
