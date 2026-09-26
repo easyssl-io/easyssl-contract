@@ -22,7 +22,7 @@ import (
 // the fields it does not recognize. Before the first external release it
 // remains at the unpublished 0.0.1 baseline; those bump rules apply after that
 // release.
-const ContractVersion = "0.1.0"
+const ContractVersion = "0.0.1"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
