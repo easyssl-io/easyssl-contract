@@ -177,6 +177,10 @@ type DiscoveredCertificate struct {
 	// Certificate can be requested with. Empty when unknown or another
 	// algorithm. A Certificate requested for the Target starts with it.
 	KeyType string `json:"keyType,omitempty"`
+	// SHA256 is the lowercase hex SHA-256 of the leaf certificate's DER
+	// encoding: which exact certificate is installed there, so the Server can
+	// tell whether it is still the one it last deployed. Optional.
+	SHA256 string `json:"sha256,omitempty"`
 }
 
 // ExtraDatum is one labeled item of a discovered Target's extra data.
