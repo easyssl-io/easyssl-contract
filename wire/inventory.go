@@ -56,11 +56,11 @@ type PluginInventory struct {
 	// warning; the Agent keeps nothing.
 	Unobserved bool `json:"unobserved,omitempty"`
 	// The discover answer, verbatim (contracts: plugincontract.DiscoverResponse).
-	Version          string                           `json:"version,omitempty"`
-	Description      string                           `json:"description,omitempty"`
-	Declarations     []SettingDeclaration             `json:"declarations,omitempty"`
-	SuggestedTargets []plugincontract.SuggestedTarget `json:"suggestedTargets,omitempty"`
-	Warnings         []string                         `json:"warnings,omitempty"`
+	Version           string                            `json:"version,omitempty"`
+	Description       string                            `json:"description,omitempty"`
+	Declarations      []SettingDeclaration              `json:"declarations,omitempty"`
+	DiscoveredTargets []plugincontract.DiscoveredTarget `json:"discoveredTargets,omitempty"`
+	Warnings          []string                          `json:"warnings,omitempty"`
 }
 
 // KeyInfo is one private key in the Agent's keystore, by its public half only.

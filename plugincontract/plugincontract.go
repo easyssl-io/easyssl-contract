@@ -30,7 +30,7 @@ const ContractVersion = "0.0.1"
 const (
 	// OpDiscover asks the Plugin what it is and what it sees on the host: its
 	// identity and declared settings, and the installation points it found by
-	// parsing the host's configuration, as suggested Targets, with warnings for
+	// parsing the host's configuration, as discovered Targets, with warnings for
 	// what it could not turn into one. It takes no request body. The Agent runs
 	// it on every check-in, never once at install, so a binary swapped by hand
 	// is read from what would run, and the answer rides the host inventory to
@@ -120,11 +120,11 @@ type SettingDeclaration struct {
 	// declares two is refused rather than having one of them chosen for it.
 	Summary bool `json:"summary"`
 	// Identity marks a setting whose value identifies an installation point:
-	// the Server composes a suggested Target's discovery key from the values of
-	// every Identity setting, in declaration order, and matches suggestions to
-	// Targets on it. Distinct from Summary, which is what a reader sees a Target
+	// the Server composes a discovered Target's discovery key from the values
+	// of every Identity setting, in declaration order, and matches discovered
+	// Targets to Targets on it. Distinct from Summary, which is what a reader sees a Target
 	// called; the two happen to coincide for nginx. A Plugin that reports
-	// suggestions flags at least one (ValidateDiscover).
+	// discovered Targets flags at least one (ValidateDiscover).
 	Identity bool `json:"identity"`
 }
 
@@ -138,18 +138,19 @@ type DiscoverResponse struct {
 	// Markdown subset the web console renders; optional.
 	Description string               `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
-	// SuggestedTargets are the installation points the Plugin parsed, each an
-	// offer to add a Target from the web console and never a Target itself.
-	// Empty for a Plugin that inspects nothing.
-	SuggestedTargets []SuggestedTarget `json:"suggestedTargets"`
-	// Warnings are what discovery saw and could not turn into a suggestion, in
-	// the Markdown subset, shown on the Agent page under the Plugin.
+	// DiscoveredTargets are the installation points the Plugin found on the
+	// host, reported as observations: what the Server makes of each, an offer
+	// to add a Target or the host's account of a Target that exists, is the
+	// Server's decision. Empty for a Plugin that inspects nothing.
+	DiscoveredTargets []DiscoveredTarget `json:"discoveredTargets"`
+	// Warnings are what discovery saw and could not report as a discovered
+	// Target, in the Markdown subset, shown on the Agent page under the Plugin.
 	Warnings []string `json:"warnings"`
 }
 
-// SuggestedTarget is one installation point a Plugin found. It carries no
+// DiscoveredTarget is one installation point a Plugin found. It carries no
 // key of its own: the Server composes one from the Identity settings.
-type SuggestedTarget struct {
+type DiscoveredTarget struct {
 	// PluginSettings is a value per declared setting key, opaque to the Server
 	// and resolved by the Plugin: a path arrives as the file it names, never
 	// as the spelling in the configuration. Promotion copies these into the
@@ -158,20 +159,27 @@ type SuggestedTarget struct {
 	// PluginExtraData is shown and never read: stored opaquely, never copied
 	// into a Target, never compared. Values are in the Markdown subset.
 	PluginExtraData []ExtraDatum `json:"pluginExtraData"`
-	// SuggestedDomains are the names the certificate at that point holds,
-	// addresses and wildcards included; what is requestable is the Server's
-	// rule.
-	SuggestedDomains []string `json:"suggestedDomains"`
-	// KeyType names the algorithm of the key the certificate at that point
-	// uses, when the Plugin can tell: one of ec_p256, ec_p384, rsa_2048,
-	// rsa_3072 or rsa_4096, the key types a Certificate can be requested with.
-	// Empty when unknown or another algorithm. Typed rather than extra data
-	// because the Server acts on it: a Certificate requested for the Target
-	// starts with this algorithm. Optional.
+	// Certificate describes the certificate installed at that point, when the
+	// Plugin read one; absent when there is none yet or it could not be read.
+	Certificate *DiscoveredCertificate `json:"certificate,omitempty"`
+}
+
+// DiscoveredCertificate is what a Plugin read from the certificate installed
+// at a discovered Target. Typed rather than extra data because the Server
+// acts on it.
+type DiscoveredCertificate struct {
+	// Domains are the names the certificate holds, in the order its subject
+	// alternative name extension lists them, addresses and wildcards
+	// included; what is requestable is the Server's rule.
+	Domains []string `json:"domains"`
+	// KeyType names the algorithm of its key when the Plugin can tell: one of
+	// ec_p256, ec_p384, rsa_2048, rsa_3072 or rsa_4096, the key types a
+	// Certificate can be requested with. Empty when unknown or another
+	// algorithm. A Certificate requested for the Target starts with it.
 	KeyType string `json:"keyType,omitempty"`
 }
 
-// ExtraDatum is one labeled item of a suggestion's extra data.
+// ExtraDatum is one labeled item of a discovered Target's extra data.
 type ExtraDatum struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
@@ -263,15 +271,15 @@ func ValidateSettings(decls []SettingDeclaration) error {
 // TooManySummaryError names the settings that claimed it, because the Plugin's
 // author is the one who has to pick, and the keys are how they find them.
 // ValidateDiscover checks a whole discover answer, ValidateSettings included:
-// a Plugin that reports suggestions must flag at least one identity setting,
-// each suggestion must give every identity setting a non-empty value, and
-// must name only declared settings, since a key the declarations do not know
-// could be neither shown nor promoted.
+// a Plugin that reports discovered Targets must flag at least one identity
+// setting, each discovered Target must give every identity setting a
+// non-empty value, and must name only declared settings, since a key the
+// declarations do not know could be neither shown nor promoted.
 func ValidateDiscover(d DiscoverResponse) error {
 	if err := ValidateSettings(d.Settings); err != nil {
 		return err
 	}
-	if len(d.SuggestedTargets) == 0 {
+	if len(d.DiscoveredTargets) == 0 {
 		return nil
 	}
 	declared := map[string]bool{}
@@ -283,17 +291,17 @@ func ValidateDiscover(d DiscoverResponse) error {
 		}
 	}
 	if len(identity) == 0 {
-		return errors.New("plugincontract: a Plugin that reports suggested Targets must mark at least one setting identity")
+		return errors.New("plugincontract: a Plugin that reports discovered Targets must mark at least one setting identity")
 	}
-	for i, t := range d.SuggestedTargets {
+	for i, t := range d.DiscoveredTargets {
 		for k := range t.PluginSettings {
 			if !declared[k] {
-				return fmt.Errorf("plugincontract: suggestion %d sets %q, which is not a declared setting", i, k)
+				return fmt.Errorf("plugincontract: discovered Target %d sets %q, which is not a declared setting", i, k)
 			}
 		}
 		for _, k := range identity {
 			if t.PluginSettings[k] == "" {
-				return fmt.Errorf("plugincontract: suggestion %d gives identity setting %q no value", i, k)
+				return fmt.Errorf("plugincontract: discovered Target %d gives identity setting %q no value", i, k)
 			}
 		}
 	}
