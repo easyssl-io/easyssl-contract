@@ -11,6 +11,12 @@
 // nothing remains to read afterwards.
 package plugincontract
 
+import (
+	"errors"
+	"fmt"
+	"strings"
+)
+
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
 // fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
 // the fields it does not recognize. Before the first external release it
@@ -22,15 +28,34 @@ const ContractVersion = "0.0.1"
 // receiving an operation it does not implement exits non-zero with a line on
 // stderr, and the Agent treats the operation as unsupported.
 const (
-	// OpDescribe asks the Plugin to identify itself and declare its settings.
-	// It takes no request body. The Agent runs it once at install time and
-	// reports the answer to the Server, which is how the web console can show
-	// and configure a Plugin's settings without ever reaching the host.
-	OpDescribe = "describe"
-	// OpInstall performs one certificate installation. Everything that happens
-	// on the host happens inside this one call; the Agent sees only the
-	// response.
-	OpInstall = "install"
+	// OpDiscover asks the Plugin what it is and what it sees on the host: its
+	// identity and declared settings, and the installation points it found by
+	// parsing the host's configuration, as discovered Targets, with warnings for
+	// what it could not turn into one. It takes no request body. The Agent runs
+	// it on every check-in, never once at install, so a binary swapped by hand
+	// is read from what would run, and the answer rides the host inventory to
+	// the Server. Every Plugin implements it; one that inspects nothing answers
+	// with both lists empty.
+	//
+	// Failing to inspect the host is not a failure of the operation: a
+	// configuration the Plugin cannot read is a warning beside the
+	// declarations. A non-zero exit or a timeout is the operation producing
+	// nothing this run, which the Agent reports as the Plugin being present
+	// but unobserved.
+	OpDiscover = "discover"
+	// OpDeploy carries out one Deployment: it puts a Certificate onto whatever
+	// the Plugin installs onto, and reloads whatever has to be reloaded.
+	// Everything that happens on the host happens inside this one call.
+	//
+	// It is named for the Deployment record it carries out, not for what it
+	// does to the Certificate, and that is deliberate. "install" named four
+	// different acts in this system — installing the Agent, installing a
+	// Plugin, installing the systemd unit, installing a Certificate — and two
+	// of them met inside one file, where the Agent installs the Plugin
+	// executable ten lines above building this request. A reader tracing a
+	// `dep-` record from the web console through the Server to the host now
+	// finds one word the whole way.
+	OpDeploy = "deploy"
 )
 
 // Setting types. The type tells a consumer how to present and check a value; a
@@ -50,7 +75,23 @@ const (
 // stored against them. Required with an empty Default means the Plugin cannot
 // know the value and someone must supply one before a deployment can run.
 //
-// Description, here and on DescribeResponse, is written in a small Markdown
+// A later build of a Plugin MUST accept every setting an earlier build
+// declared, because Targets configured under the earlier build keep their
+// values and resolve against whatever build the host holds now, and a
+// Deployment queued before an upgrade runs on the new build with the settings
+// resolved before it:
+//
+//   - a Key keeps its meaning and is never renamed or reused;
+//   - a setting a later build adds is optional, or has a Default that
+//     reproduces the earlier behavior, and deploy treats it as absent when a
+//     request does not carry it;
+//   - a setting a later build drops is ignored when a request still carries it.
+//
+// A build that cannot honor this is a new Plugin, under a new name. Adding a
+// Required setting with no Default is allowed but makes every existing Target
+// of the Plugin undeployable until someone sets it.
+//
+// Description, here and on DiscoverResponse, is written in a small Markdown
 // subset, which is all the web console renders:
 //
 //   - `backticks` set a span as code. Use them for anything a reader would
@@ -74,31 +115,84 @@ type SettingDeclaration struct {
 	Required    bool   `json:"required"`
 	// Summary marks the one setting whose value an unlabeled installation
 	// point of this Plugin is known by on screen. At most one per Plugin;
-	// false everywhere means none.
+	// false everywhere means none. ValidateSettings enforces the "at most
+	// one", and both the Agent and the Server call it, so a Plugin that
+	// declares two is refused rather than having one of them chosen for it.
 	Summary bool `json:"summary"`
+	// Identity marks a setting whose value identifies an installation point:
+	// the Server composes a discovered Target's discovery key from the values
+	// of every Identity setting, in declaration order, and matches discovered
+	// Targets to Targets on it. Distinct from Summary, which is what a reader sees a Target
+	// called; the two happen to coincide for nginx. A Plugin that reports
+	// discovered Targets flags at least one (ValidateDiscover).
+	Identity bool `json:"identity"`
 }
 
-// DescribeResponse is OpDescribe's answer: who this build is and what it
-// declares. Version is the Plugin's own; the Agent reports it together with
-// the artifact digest, so what a host runs is always attributable.
-type DescribeResponse struct {
+// DiscoverResponse is OpDiscover's answer: who this build is, what it
+// declares, and what it found on the host.
+type DiscoverResponse struct {
 	ContractVersion string `json:"contractVersion"`
 	Name            string `json:"name"`
 	Version         string `json:"version"`
-	// Description says what this Plugin installs onto, in one or two sentences
-	// a person choosing between Plugins can read. The settings each describe
-	// one value; nothing until now described the Plugin, so a page about one
-	// could only list what it could be configured with. Optional: a Plugin that
-	// says nothing is shown without it rather than with an empty line. Same
-	// Markdown subset as SettingDeclaration.Description.
+	// Description is the build's own account of what it installs onto, in the
+	// Markdown subset the web console renders; optional.
 	Description string               `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
+	// DiscoveredTargets are the installation points the Plugin found on the
+	// host, reported as observations: what the Server makes of each, an offer
+	// to add a Target or the host's account of a Target that exists, is the
+	// Server's decision. Empty for a Plugin that inspects nothing.
+	DiscoveredTargets []DiscoveredTarget `json:"discoveredTargets"`
+	// Warnings are what discovery saw and could not report as a discovered
+	// Target, in the Markdown subset, shown on the Agent page under the Plugin.
+	Warnings []string `json:"warnings"`
 }
 
-// InstallRequest is OpInstall's request. The material arrives as PEM text, not
+// DiscoveredTarget is one installation point a Plugin found. It carries no
+// key of its own: the Server composes one from the Identity settings.
+type DiscoveredTarget struct {
+	// PluginSettings is a value per declared setting key, opaque to the Server
+	// and resolved by the Plugin: a path arrives as the file it names, never
+	// as the spelling in the configuration. Promotion copies these into the
+	// Target.
+	PluginSettings map[string]string `json:"pluginSettings"`
+	// PluginExtraData is shown and never read: stored opaquely, never copied
+	// into a Target, never compared. Values are in the Markdown subset.
+	PluginExtraData []ExtraDatum `json:"pluginExtraData"`
+	// Certificate describes the certificate installed at that point, when the
+	// Plugin read one; absent when there is none yet or it could not be read.
+	Certificate *DiscoveredCertificate `json:"certificate,omitempty"`
+}
+
+// DiscoveredCertificate is what a Plugin read from the certificate installed
+// at a discovered Target. Typed rather than extra data because the Server
+// acts on it.
+type DiscoveredCertificate struct {
+	// Domains are the names the certificate holds, in the order its subject
+	// alternative name extension lists them, addresses and wildcards
+	// included; what is requestable is the Server's rule.
+	Domains []string `json:"domains"`
+	// KeyType names the algorithm of its key when the Plugin can tell: one of
+	// ec_p256, ec_p384, rsa_2048, rsa_3072 or rsa_4096, the key types a
+	// Certificate can be requested with. Empty when unknown or another
+	// algorithm. A Certificate requested for the Target starts with it.
+	KeyType string `json:"keyType,omitempty"`
+	// SHA256 is the lowercase hex SHA-256 of the leaf certificate's DER
+	// encoding: which exact certificate is installed there, so the Server can
+	// tell whether it is still the one it last deployed. Optional.
+	SHA256 string `json:"sha256,omitempty"`
+}
+
+// ExtraDatum is one labeled item of a discovered Target's extra data.
+type ExtraDatum struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+// DeployRequest is OpDeploy's request. The material arrives as PEM text, not
 // as paths: a Plugin that installs through an API needs no file, and one that
 // does need files creates them itself, inside WorkDir.
-type InstallRequest struct {
+type DeployRequest struct {
 	ContractVersion string `json:"contractVersion"`
 	CertificatePem  string `json:"certificatePem"`
 	ChainPem        string `json:"chainPem"`
@@ -113,17 +207,114 @@ type InstallRequest struct {
 	Settings map[string]string `json:"settings"`
 }
 
-// InstallResponse is OpInstall's answer. OK is the deployment's outcome;
-// Output is one text, whatever the Plugin chooses to say about what it did —
-// exit statuses of inner commands live inside it, never as fields, because the
-// commands ran inside the Plugin and only this answer crosses back.
+// OpDeploy answers with the process itself: exit 0 means the Certificate is
+// installed, anything else means it is not, stdout is what happened for a
+// person to read, and stderr is diagnostics. There is no response document.
 //
-// The process exit code is transport only: exit 0 with OK false is a
-// deployment that failed, while a non-zero exit or unparseable stdout is a
-// Plugin failure the Agent reports as the deployment's failure with whatever
-// it captured.
-type InstallResponse struct {
-	ContractVersion string `json:"contractVersion"`
-	OK              bool   `json:"ok"`
-	Output          string `json:"output"`
+// There was one, carrying `ok` and `output`, and it earned its place while the
+// Deployment record needed structure the process could not give. The record
+// now keeps the exit status, the duration and both streams itself, so the
+// document repeated what the Agent already had — in a form free to contradict
+// it. A Plugin could exit 0 and say it failed, or exit 3 and say it worked, and
+// something had to decide which to believe.
+//
+// What that field could say and an exit code cannot is "the Plugin worked and
+// the install did not". It is not lost, it moved: a Plugin says so in its own
+// output, in its own words, which is where a reader looks anyway. What is gone
+// is a Plugin's ability to claim one thing while its exit status says another.
+//
+// The cost, stated because it is the one that matters later: there is no
+// envelope to add a field to. A Plugin that must one day report structured
+// facts about what it changed needs a mechanism that does not exist here, and
+// once this contract is published, reintroducing one is a breaking change for
+// every Plugin. Nothing wants it today.
+//
+// `discover` keeps its JSON, because it genuinely returns structure. The
+// asymmetry is the two operations being different in kind: one answers a
+// question, the other does work.
+
+// SummarySetting returns the key of the setting an unlabeled installation point
+// is named by, or "" when the Plugin declares none. Meaningful only on a
+// declaration set that passed ValidateSettings, which is what makes "the
+// summary setting" a single thing rather than "the first of them".
+func SummarySetting(decls []SettingDeclaration) string {
+	for _, d := range decls {
+		if d.Summary {
+			return d.Key
+		}
+	}
+	return ""
+}
+
+// ValidateSettings checks what a declaration set must satisfy whoever is
+// reading it. One rule today: at most one setting may be Summary.
+//
+// It is here rather than in either caller because both the Agent, at install
+// time, and the Server, when the report arrives, have to reach the same
+// verdict. A rule enforced in one of them is a rule the other disagrees with
+// the moment somebody reaches it another way.
+//
+// Two summary settings is not a shape problem — it parses, and every field is
+// valid — which is exactly why it needs saying. Without this the Server names
+// an unlabeled Target after whichever the Plugin happened to declare first,
+// which is a choice nobody made and which changes if the Plugin's author
+// reorders its list.
+func ValidateSettings(decls []SettingDeclaration) error {
+	var summaries []string
+	for _, d := range decls {
+		if d.Summary {
+			summaries = append(summaries, d.Key)
+		}
+	}
+	if len(summaries) > 1 {
+		return &TooManySummaryError{Keys: summaries}
+	}
+	return nil
+}
+
+// TooManySummaryError names the settings that claimed it, because the Plugin's
+// author is the one who has to pick, and the keys are how they find them.
+// ValidateDiscover checks a whole discover answer, ValidateSettings included:
+// a Plugin that reports discovered Targets must flag at least one identity
+// setting, each discovered Target must give every identity setting a
+// non-empty value, and must name only declared settings, since a key the
+// declarations do not know could be neither shown nor promoted.
+func ValidateDiscover(d DiscoverResponse) error {
+	if err := ValidateSettings(d.Settings); err != nil {
+		return err
+	}
+	if len(d.DiscoveredTargets) == 0 {
+		return nil
+	}
+	declared := map[string]bool{}
+	var identity []string
+	for _, s := range d.Settings {
+		declared[s.Key] = true
+		if s.Identity {
+			identity = append(identity, s.Key)
+		}
+	}
+	if len(identity) == 0 {
+		return errors.New("plugincontract: a Plugin that reports discovered Targets must mark at least one setting identity")
+	}
+	for i, t := range d.DiscoveredTargets {
+		for k := range t.PluginSettings {
+			if !declared[k] {
+				return fmt.Errorf("plugincontract: discovered Target %d sets %q, which is not a declared setting", i, k)
+			}
+		}
+		for _, k := range identity {
+			if t.PluginSettings[k] == "" {
+				return fmt.Errorf("plugincontract: discovered Target %d gives identity setting %q no value", i, k)
+			}
+		}
+	}
+	return nil
+}
+
+type TooManySummaryError struct{ Keys []string }
+
+func (e *TooManySummaryError) Error() string {
+	return "plugincontract: at most one setting may be marked summary, but " +
+		strings.Join(e.Keys, ", ") + " all are"
 }
