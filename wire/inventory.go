@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/easyssl-io/easyssl-contract/l10n"
 	"github.com/easyssl-io/easyssl-contract/plugincontract"
 )
 
@@ -57,10 +58,10 @@ type PluginInventory struct {
 	Unobserved bool `json:"unobserved,omitempty"`
 	// The discover answer, verbatim (contracts: plugincontract.DiscoverResponse).
 	Version           string                            `json:"version,omitempty"`
-	Description       string                            `json:"description,omitempty"`
+	Description       l10n.Text                         `json:"description,omitempty"`
 	Declarations      []SettingDeclaration              `json:"declarations,omitempty"`
 	DiscoveredTargets []plugincontract.DiscoveredTarget `json:"discoveredTargets,omitempty"`
-	Warnings          []string                          `json:"warnings,omitempty"`
+	Warnings          []l10n.Text                       `json:"warnings,omitempty"`
 }
 
 // KeyInfo is one private key in the Agent's keystore, by its public half only.
