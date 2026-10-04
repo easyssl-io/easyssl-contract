@@ -15,6 +15,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/easyssl-io/easyssl-contract/l10n"
 )
 
 // ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
@@ -91,8 +93,14 @@ const (
 // Required setting with no Default is allowed but makes every existing Target
 // of the Plugin undeployable until someone sets it.
 //
-// Description, here and on DiscoverResponse, is written in a small Markdown
-// subset, which is all the web console renders:
+// Label and Description, here and on DiscoverResponse, are text per language
+// (l10n.Text): a Plugin is the author of its own translations, English always
+// among them, and whoever shows the text chooses its reader's language. A
+// Plugin cannot be asked for one language, because what it answers is stored
+// and read later by people who do not share one.
+//
+// Description is written, in each language, in a small Markdown subset, which
+// is all the web console renders:
 //
 //   - `backticks` set a span as code. Use them for anything a reader would
 //     type, copy or look for on a host: a command, a path, an environment
@@ -107,12 +115,12 @@ const (
 // rather than HTML for the same reason: a subset this small has nothing to
 // sanitize.
 type SettingDeclaration struct {
-	Key         string `json:"key"`
-	Label       string `json:"label"`
-	Description string `json:"description"`
-	Type        string `json:"type"`
-	Default     string `json:"default"`
-	Required    bool   `json:"required"`
+	Key         string    `json:"key"`
+	Label       l10n.Text `json:"label"`
+	Description l10n.Text `json:"description"`
+	Type        string    `json:"type"`
+	Default     string    `json:"default"`
+	Required    bool      `json:"required"`
 	// Summary marks the one setting whose value an unlabeled installation
 	// point of this Plugin is known by on screen. At most one per Plugin;
 	// false everywhere means none. ValidateSettings enforces the "at most
@@ -135,8 +143,8 @@ type DiscoverResponse struct {
 	Name            string `json:"name"`
 	Version         string `json:"version"`
 	// Description is the build's own account of what it installs onto, in the
-	// Markdown subset the web console renders; optional.
-	Description string               `json:"description,omitempty"`
+	// Markdown subset the web console renders, per language; optional.
+	Description l10n.Text            `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
 	// DiscoveredTargets are the installation points the Plugin found on the
 	// host, reported as observations: what the Server makes of each, an offer
@@ -144,8 +152,9 @@ type DiscoverResponse struct {
 	// Server's decision. Empty for a Plugin that inspects nothing.
 	DiscoveredTargets []DiscoveredTarget `json:"discoveredTargets"`
 	// Warnings are what discovery saw and could not report as a discovered
-	// Target, in the Markdown subset, shown on the Agent page under the Plugin.
-	Warnings []string `json:"warnings"`
+	// Target, each per language and in the Markdown subset, shown on the Agent
+	// page under the Plugin.
+	Warnings []l10n.Text `json:"warnings"`
 }
 
 // DiscoveredTarget is one installation point a Plugin found. It carries no
@@ -183,10 +192,12 @@ type DiscoveredCertificate struct {
 	SHA256 string `json:"sha256,omitempty"`
 }
 
-// ExtraDatum is one labeled item of a discovered Target's extra data.
+// ExtraDatum is one labeled item of a discovered Target's extra data. The
+// Label is text per language; the Value is what was found on the host, a
+// literal, and is the same in every language.
 type ExtraDatum struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
+	Label l10n.Text `json:"label"`
+	Value string    `json:"value"`
 }
 
 // DeployRequest is OpDeploy's request. The material arrives as PEM text, not
@@ -247,7 +258,8 @@ func SummarySetting(decls []SettingDeclaration) string {
 }
 
 // ValidateSettings checks what a declaration set must satisfy whoever is
-// reading it. One rule today: at most one setting may be Summary.
+// reading it: at most one setting may be Summary, and every Label and
+// Description is a text someone could show (l10n.Text.Validate).
 //
 // It is here rather than in either caller because both the Agent, at install
 // time, and the Server, when the report arrives, have to reach the same
@@ -265,6 +277,12 @@ func ValidateSettings(decls []SettingDeclaration) error {
 		if d.Summary {
 			summaries = append(summaries, d.Key)
 		}
+		if err := d.Label.Validate(); err != nil {
+			return fmt.Errorf("plugincontract: the label of setting %q: %w", d.Key, err)
+		}
+		if err := d.Description.Validate(); err != nil {
+			return fmt.Errorf("plugincontract: the description of setting %q: %w", d.Key, err)
+		}
 	}
 	if len(summaries) > 1 {
 		return &TooManySummaryError{Keys: summaries}
@@ -275,13 +293,28 @@ func ValidateSettings(decls []SettingDeclaration) error {
 // TooManySummaryError names the settings that claimed it, because the Plugin's
 // author is the one who has to pick, and the keys are how they find them.
 // ValidateDiscover checks a whole discover answer, ValidateSettings included:
-// a Plugin that reports discovered Targets must flag at least one identity
+// every text is one someone could show, a Plugin that reports discovered Targets must flag at least one identity
 // setting, each discovered Target must give every identity setting a
 // non-empty value, and must name only declared settings, since a key the
 // declarations do not know could be neither shown nor promoted.
 func ValidateDiscover(d DiscoverResponse) error {
 	if err := ValidateSettings(d.Settings); err != nil {
 		return err
+	}
+	if err := d.Description.Validate(); err != nil {
+		return fmt.Errorf("plugincontract: the description: %w", err)
+	}
+	for i, w := range d.Warnings {
+		if err := w.Validate(); err != nil {
+			return fmt.Errorf("plugincontract: warning %d: %w", i, err)
+		}
+	}
+	for i, t := range d.DiscoveredTargets {
+		for _, x := range t.PluginExtraData {
+			if err := x.Label.Validate(); err != nil {
+				return fmt.Errorf("plugincontract: an extra-data label of discovered Target %d: %w", i, err)
+			}
+		}
 	}
 	if len(d.DiscoveredTargets) == 0 {
 		return nil

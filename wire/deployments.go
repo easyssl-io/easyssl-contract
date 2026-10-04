@@ -1,5 +1,7 @@
 package wire
 
+import "github.com/easyssl-io/easyssl-contract/l10n"
+
 // The deployment resource behind a CommandDeploy: how the Agent learns what
 // to install and reports how it went. The command carries only the deployment
 // id; these routes are where the work lives, the same split the request_csr
@@ -78,7 +80,11 @@ type DeploymentResult struct {
 	// never a container for captured output — the streams have their own
 	// fields below. Absent on a clean run, so its presence is itself the
 	// signal that something happened outside the Plugin.
-	AgentMessage string `json:"agentMessage,omitempty"`
+	//
+	// A text per language, English required: it is stored and read later in
+	// the web console by people who share neither the host's language nor
+	// each other's, so every language travels and the reader's side chooses.
+	AgentMessage l10n.Text `json:"agentMessage,omitempty"`
 	// PluginRun is what the process did, and is absent when no process ran.
 	// Its presence is the fact that one did.
 	PluginRun *PluginRun `json:"pluginRun,omitempty"`
