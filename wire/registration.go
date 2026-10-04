@@ -112,9 +112,9 @@ type RegistrationResponse struct {
 	// somebody who may administer several.
 	OrganizationName string `json:"organizationName,omitempty"`
 	// OrganizationID is the web console's public id for it (`org-…`). Sent beside
-	// the name because the name is not unique: every account starts with one
-	// called "Default organization", so the name alone cannot tell an operator
-	// which one a host joined.
+	// the name because the name is not unique: two Organizations may carry the
+	// same one, so the name alone cannot tell an operator which one a host
+	// joined.
 	OrganizationID string `json:"organizationId,omitempty"`
 }
 
