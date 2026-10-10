@@ -170,6 +170,8 @@ type DiscoveredTarget struct {
 	PluginExtraData []ExtraDatum `json:"pluginExtraData"`
 	// Certificate describes the certificate installed at that point, when the
 	// Plugin read one; absent when there is none yet or it could not be read.
+	// It is a statement about a concrete certificate, so a Plugin that knows
+	// names only from configuration, a virtual host's say, leaves it out.
 	Certificate *DiscoveredCertificate `json:"certificate,omitempty"`
 }
 
@@ -187,8 +189,12 @@ type DiscoveredCertificate struct {
 	// algorithm. A Certificate requested for the Target starts with it.
 	KeyType string `json:"keyType,omitempty"`
 	// SHA256 is the lowercase hex SHA-256 of the leaf certificate's DER
-	// encoding: which exact certificate is installed there, so the Server can
-	// tell whether it is still the one it last deployed. Optional.
+	// encoding: which exact certificate is installed there. It is the one
+	// field that asserts a certificate was read, the others being reportable
+	// from elsewhere, so a Plugin sends it whenever it read one. The Server
+	// tells from it whether the host still serves what it last deployed, and
+	// that a certificate is installed where it has deployed none. Optional
+	// only because a Plugin may be unable to read the file at all.
 	SHA256 string `json:"sha256,omitempty"`
 }
 
