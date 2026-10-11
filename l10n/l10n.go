@@ -1,25 +1,18 @@
 // Package l10n is how every Go component of easySSL says something to a person
-// in that person's language: the Agent on a host, a Plugin describing itself,
-// the Server in the few texts it authors.
-//
-// A message is an explicit ID naming where it appears, with its English text
+// in that person's language. A message is an explicit ID with its English text
 // beside it at the call site:
 //
 //	p.T("register.done", "{name} is authorized and active.", "name", name)
 //
-// The ID is never derived from the English, so one English word can carry two
-// translations in two places and correcting English wording orphans nothing.
-// A sentence is one message: values are named placeholders a translation may
-// reorder, and translated fragments are never concatenated.
+// The ID is never derived from the English, values are named placeholders a
+// translation may reorder, and translated fragments are never concatenated.
+// Translations live in one `<lang>.json` per language, mapping an ID to its
+// text or to its plural forms. English has no file, and a message with no
+// translation is shown in English, never as its ID.
 //
-// Translations live in one JSON file per language, `<lang>.json`, mapping an
-// ID to its text, or to its plural forms for a message that depends on a
-// count. English has no file: the call sites are its catalog. A message with
-// no translation is shown in English, never as its ID.
-//
-// Standard library only, deliberately. Everything on a host is meant to be
-// read end to end by whoever audits it, and a translation library would add
-// itself and its dependencies to the Agent and to every Plugin.
+// Standard library only, deliberately: a translation library would add itself
+// and its dependencies to the Agent and to every Plugin, which are meant to be
+// read end to end by whoever audits them.
 package l10n
 
 import (
@@ -39,8 +32,7 @@ const English = "en"
 const MaxLanguages = 20
 
 // supported is every language easySSL speaks, the source language first. The
-// web console holds the same list in its `lingui.config.ts`; if either moves,
-// the other moves, and the web console's i18n check compares the two.
+// web console holds the same list; if either moves, the other moves.
 var supported = []string{English, "es"}
 
 // names is each language under its own name, which is how a language is
@@ -88,12 +80,9 @@ func FromLocale(getenv func(string) string) (string, bool) {
 }
 
 // Text is one text in several languages: a base language code to the text in
-// that language. Empty means there is no text. One that is not empty holds
-// English, which is what a reader of any other language falls back to.
-//
-// It is what a Plugin's own text travels as. Whoever reports it cannot know
-// who will read it, and two people read one report in two languages, so every
-// language travels and the reader's side chooses.
+// that language. Empty means there is no text; one that is not empty holds
+// English, the fallback for every other language. Every language travels
+// because whoever reports a text cannot know who will read it.
 type Text map[string]string
 
 var languageCode = regexp.MustCompile(`^[a-z]{2,3}$`)
@@ -212,7 +201,6 @@ type Printer struct {
 	lang string
 }
 
-// Language returns the language the Printer speaks.
 func (p Printer) Language() string { return p.lang }
 
 // T renders the message id. english is its English text; args are
