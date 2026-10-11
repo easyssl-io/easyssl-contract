@@ -14,8 +14,7 @@ import (
 // RouteAgentInventory is where an Agent PUTs its whole host inventory,
 // replacing what the Server holds for it. Sent only when the check-in answers
 // that the Server wants it (CheckinResponse.ReportInventory), so the check-in
-// stays constant-size and this route carries the payload however large a host's
-// state grows.
+// stays constant-size however large a host's state grows.
 const RouteAgentInventory = "/api/v1/agent/inventory"
 
 // SettingDeclaration is the declaration a Plugin produced and the inventory
@@ -24,14 +23,12 @@ const RouteAgentInventory = "/api/v1/agent/inventory"
 type SettingDeclaration = plugincontract.SettingDeclaration
 
 // Inventory is everything an Agent observes about its own host, recomputed on
-// every check-in and never persisted on the host: the diagnostics that used to
-// be reported at registration alone, and the keystore's key list. Nothing
-// Server-owned is in it, and no private key: KeyInfo carries a fingerprint.
+// every check-in and never persisted on the host. Nothing Server-owned is in
+// it, and no private key: KeyInfo carries a fingerprint.
 //
-// Replacing semantics are the point. An entry absent from the document is one
-// the host no longer has, which is what lets a deleted key stop being a holder
-// without a route to say so; it is also why an Agent that failed to read any
-// contributor must not send the document at all.
+// The document replaces: an entry absent from it is one the host no longer has,
+// which is what lets a deleted key stop being a holder. An Agent that failed to
+// read any contributor must therefore not send the document at all.
 type Inventory struct {
 	Diagnostics Diagnostics `json:"diagnostics"`
 	// Plugins is every Plugin executable on the host with what it answered to
@@ -56,7 +53,7 @@ type PluginInventory struct {
 	// failure. The Server keeps the last answer it received and shows the
 	// warning; the Agent keeps nothing.
 	Unobserved bool `json:"unobserved,omitempty"`
-	// The discover answer, verbatim (contracts: plugincontract.DiscoverResponse).
+	// The discover answer, verbatim (plugincontract.DiscoverResponse).
 	Version           string                            `json:"version,omitempty"`
 	Description       l10n.Text                         `json:"description,omitempty"`
 	Declarations      []SettingDeclaration              `json:"declarations,omitempty"`
@@ -76,17 +73,16 @@ type KeyInfo struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-// InventoryFingerprint is the one hash both sides compute over an Inventory: the
-// Agent to put on its check-in, the Server to store beside the document and
-// compare against the next check-in. Both call this function, from this
-// module, because if the two canonicalized differently every check-in would
-// disagree, every check-in would ask for a report, and the mechanism would
-// invert into a permanent full-inventory push that nothing reports as broken.
+// InventoryFingerprint is the one hash both sides compute over an Inventory:
+// the Agent to put on its check-in, the Server to store beside the document and
+// compare against the next check-in. Both call this function, because if the
+// two canonicalized differently every check-in would ask for a report, a
+// permanent full-inventory push that nothing reports as broken.
 //
-// Canonical form: keys sorted by fingerprint, Plugins by id, then the JSON encoding with
-// object members in sorted order, which encoding/json gives for a map. Times
-// are compared as RFC 3339 in UTC so a document that round-tripped through the
-// Server's clock-free storage hashes the same.
+// Canonical form: keys sorted by fingerprint, Plugins by id, then the JSON
+// encoding with object members in sorted order, which encoding/json gives for a
+// map. Times are compared as RFC 3339 in UTC so a document that round-tripped
+// through the Server's clock-free storage hashes the same.
 func InventoryFingerprint(inv Inventory) (string, error) {
 	keys := make([]KeyInfo, len(inv.Keys))
 	copy(keys, inv.Keys)

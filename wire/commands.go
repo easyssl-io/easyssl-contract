@@ -1,16 +1,14 @@
 package wire
 
 // The Server→Agent push channel. The Server cannot open a connection to an
-// Agent, so the Agent holds one long-lived stream open and the Server writes
-// to it. What travels over that stream is deliberately almost nothing: a
-// command id. The Agent then reads the command, and the resource it refers to,
-// over ordinary request/response routes.
+// Agent, so the Agent holds one long-lived stream open and the Server writes to
+// it. The stream carries no work: the Agent reads each command, and the
+// resource it refers to, over ordinary request/response routes.
 //
 // The stream is an optimization, never the delivery mechanism. An Agent that
-// never manages to hold it open still performs every command, just later, by
-// listing pending commands on its regular poll. That is what makes a lost,
-// duplicated or out-of-order event harmless, and it is why nothing here
-// promises delivery.
+// never holds it open still performs every command, later, by listing pending
+// commands on its regular poll, which is what makes a lost, duplicated or
+// out-of-order event harmless.
 
 import "time"
 
@@ -35,12 +33,10 @@ const (
 // unsupported rather than failing, so adding one here stays backward
 // compatible with Agents already in the field.
 const (
-	// CommandRequestCSR asks the Agent to generate a key and return a CSR for
-	// a certificate the Server is issuing. RefID is the certificate.
-	//
-	// The names are already decided when this is sent: the Agent reads the
-	// certificate's domains and signs those, rather than choosing what to ask
-	// for. The Server checks the returned CSR against them before using it.
+	// CommandRequestCSR asks the Agent to generate a key and return a CSR for a
+	// Certificate the Server is issuing. RefID is the Certificate. The Agent signs
+	// the Certificate's domains and never chooses them, and the Server checks the
+	// returned CSR against them before using it.
 	CommandRequestCSR = "request_csr"
 	// CommandDeploy asks the Agent to place a certificate at a Target and run
 	// its reload command. RefID is the deployment.
@@ -66,20 +62,15 @@ const (
 const CodeCommandExpired = "command_expired"
 
 // EventCommand is the SSE event name that tells an Agent something is waiting
-// for it. It is the only event type on the stream today; an unknown event name
-// is ignored, the same way an unknown command type is.
+// for it. It is the only event type on the stream; an unknown event name is
+// ignored, the same way an unknown command type is.
 //
-// It carries no body. `data: {}` is sent because the SSE grammar dispatches an
-// event only when a data field is present, and there is nothing to put in it:
-// the Agent answers this by reading its outstanding commands over REST, which
-// is the only path that also delivers whatever it missed while disconnected.
-//
-// It used to carry the command's id, and nothing ever read it. That is not
-// merely waste: an id in the event invites acting on that one command and
-// skipping the reconcile, which works in testing and silently loses work in
-// production the first time an event goes missing. The Agent carried a comment
-// warning against exactly that, and an event with nothing in it cannot tempt
-// anyone.
+// It carries no body: `data: {}` is sent only because the SSE grammar
+// dispatches an event when a data field is present. The Agent answers by
+// reading its outstanding commands over REST, the only path that also delivers
+// what it missed while disconnected. An id in the event would invite acting on
+// that one command and skipping the reconcile, which silently loses work the
+// first time an event goes missing.
 const EventCommand = "command"
 
 // Command is one instruction for an Agent, as returned by RouteCommands. RefID
@@ -104,9 +95,8 @@ type CommandsResponse struct {
 //
 // It is sent after the attempt terminates and after any outcome has been
 // recorded on the referenced resource, never before. An Agent that dies in
-// between leaves the command outstanding, so it is handed back on the next
-// connect and re-run against an outcome already recorded, which is why the
-// Agent must be able to receive the same command twice and act once.
+// between is handed the command again on the next connect, so it must be able
+// to receive the same command twice and act once.
 type AckRequest struct {
 	Status string `json:"status"`
 }
