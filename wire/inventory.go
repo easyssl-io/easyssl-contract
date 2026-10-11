@@ -31,7 +31,7 @@ type SettingDeclaration = plugincontract.SettingDeclaration
 // Replacing semantics are the point. An entry absent from the document is one
 // the host no longer has, which is what lets a deleted key stop being a holder
 // without a route to say so; it is also why an Agent that failed to read any
-// contributor must not send the document at all (S2 FR-026).
+// contributor must not send the document at all.
 type Inventory struct {
 	Diagnostics Diagnostics `json:"diagnostics"`
 	// Plugins is every Plugin executable on the host with what it answered to
