@@ -1,10 +1,7 @@
-// Package l10ncheck keeps a component's translations complete. It reads a
-// module's Go source for message calls, reads its catalogs, and reports every
-// way the two disagree, so a message added, changed or removed without its
-// translations fails a test instead of reaching a reader as English in the
-// middle of another language.
-//
-// It is called from one test per module:
+// Package l10ncheck keeps a component's translations complete: it compares the
+// message calls in a module's Go source with its catalogs, so a message added,
+// changed or removed without its translations fails a test. It is called from
+// one test per module:
 //
 //	func TestCatalog(t *testing.T) { l10ncheck.Check(t, ".", "locales") }
 package l10ncheck
@@ -26,7 +23,6 @@ import (
 	"github.com/easyssl-io/easyssl-contract/l10n"
 )
 
-// message is one message as the source declares it.
 type message struct {
 	id         string
 	one, other string // one is empty for a plain message
