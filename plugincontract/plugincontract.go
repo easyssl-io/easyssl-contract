@@ -28,18 +28,22 @@ const ContractVersion = "0.0.1"
 // receiving an operation it does not implement exits non-zero with a line on
 // stderr, and the Agent treats the operation as unsupported.
 const (
-	// OpDiscover asks the Plugin what it is and what it sees on the host: its
-	// identity and declared settings, and the installation points it found as
-	// discovered Targets, with warnings for what it could not turn into one. It
-	// takes no request body. The Agent runs it on every check-in, never once at
-	// install, so a binary swapped by hand is read from what would run. Every
-	// Plugin implements it; one that inspects nothing answers with both lists
-	// empty.
+	// OpDescribe asks the Plugin what it is: its identity, its description and
+	// the settings it declares. It takes no request body and reads nothing from
+	// the host, so it needs no privilege and answers the same on any machine,
+	// which is what lets a build publish it beside the artifact. Every Plugin
+	// implements it. The Agent runs it on every check-in, right before discover,
+	// so a binary swapped by hand is read from what would run.
+	OpDescribe = "describe"
+	// OpDiscover asks the Plugin what it sees on the host: the installation
+	// points it found as discovered Targets, with warnings for what it could not
+	// turn into one. It takes no request body. Every Plugin implements it; one
+	// that inspects nothing answers with both lists empty.
 	//
-	// A configuration the Plugin cannot read is a warning beside the declarations,
-	// not a failure of the operation. A non-zero exit or a timeout is the
-	// operation producing nothing this run, which the Agent reports as the Plugin
-	// being present but unobserved.
+	// A configuration the Plugin cannot read is a warning, not a failure of the
+	// operation. A non-zero exit or a timeout is the operation producing nothing
+	// this run, which the Agent reports as the Plugin being present but
+	// unobserved.
 	OpDiscover = "discover"
 	// OpDeploy carries out one Deployment: it puts a Certificate onto whatever the
 	// Plugin installs onto, and reloads whatever has to be reloaded. Everything
@@ -80,7 +84,7 @@ const (
 // Required setting with no Default is allowed but makes every existing Target
 // of the Plugin undeployable until someone sets it.
 //
-// Label and Description, here and on DiscoverResponse, are text per language
+// Label and Description, here and on DescribeResponse, are text per language
 // (l10n.Text), English always among them. A Plugin cannot be asked for one
 // language, because what it answers is stored and read later by people who do
 // not share one.
@@ -116,9 +120,9 @@ type SettingDeclaration struct {
 	Identity bool `json:"identity"`
 }
 
-// DiscoverResponse is OpDiscover's answer: who this build is, what it
-// declares, and what it found on the host.
-type DiscoverResponse struct {
+// DescribeResponse is OpDescribe's answer: who this build is and what it
+// declares, the same wherever it runs.
+type DescribeResponse struct {
 	ContractVersion string `json:"contractVersion"`
 	Name            string `json:"name"`
 	Version         string `json:"version"`
@@ -126,6 +130,11 @@ type DiscoverResponse struct {
 	// Markdown subset the web console renders, per language; optional.
 	Description l10n.Text            `json:"description,omitempty"`
 	Settings    []SettingDeclaration `json:"settings"`
+}
+
+// DiscoverResponse is OpDiscover's answer: what this build found on the host.
+type DiscoverResponse struct {
+	ContractVersion string `json:"contractVersion"`
 	// DiscoveredTargets are the installation points the Plugin found on the
 	// host, reported as observations: what the Server makes of each, an offer
 	// to add a Target or the host's account of a Target that exists, is the
@@ -214,7 +223,7 @@ type DeployRequest struct {
 // does not exist here, and reintroducing one after this contract is published
 // is a breaking change for every Plugin.
 //
-// `discover` keeps its JSON because it returns structure.
+// `describe` and `discover` keep their JSON because they return structure.
 
 // SummarySetting returns the key of the setting an unlabeled installation point
 // is named by, or "" when the Plugin declares none. Meaningful only on a
@@ -256,19 +265,25 @@ func ValidateSettings(decls []SettingDeclaration) error {
 	return nil
 }
 
-// ValidateDiscover checks a whole discover answer, ValidateSettings included:
-// every text is one someone could show, a Plugin that reports discovered
-// Targets must flag at least one identity setting, and each discovered Target
-// must give every identity setting a non-empty value and name only declared
-// settings, since a key the declarations do not know could be neither shown nor
-// promoted.
-func ValidateDiscover(d DiscoverResponse) error {
+// ValidateDescribe checks a whole describe answer, ValidateSettings included:
+// every text is one someone could show.
+func ValidateDescribe(d DescribeResponse) error {
 	if err := ValidateSettings(d.Settings); err != nil {
 		return err
 	}
 	if err := d.Description.Validate(); err != nil {
 		return fmt.Errorf("plugincontract: the description: %w", err)
 	}
+	return nil
+}
+
+// ValidateDiscover checks a discover answer against the settings the same
+// build declares (DescribeResponse.Settings): every text is one someone could
+// show, a Plugin that reports discovered Targets must flag at least one
+// identity setting, and each discovered Target must give every identity
+// setting a non-empty value and name only declared settings, since a key the
+// declarations do not know could be neither shown nor promoted.
+func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
 	for i, w := range d.Warnings {
 		if err := w.Validate(); err != nil {
 			return fmt.Errorf("plugincontract: warning %d: %w", i, err)
@@ -286,7 +301,7 @@ func ValidateDiscover(d DiscoverResponse) error {
 	}
 	declared := map[string]bool{}
 	var identity []string
-	for _, s := range d.Settings {
+	for _, s := range settings {
 		declared[s.Key] = true
 		if s.Identity {
 			identity = append(identity, s.Key)

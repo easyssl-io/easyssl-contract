@@ -48,12 +48,14 @@ type PluginInventory struct {
 	// not the catalog's figure recorded at install: the Server compares the
 	// two, and a mismatch is a binary someone replaced by hand.
 	Digest string `json:"digest"`
-	// Unobserved says discover produced nothing this run, a non-zero exit or
-	// the timeout, so the fields below are empty and Warnings names the
-	// failure. The Server keeps the last answer it received and shows the
-	// warning; the Agent keeps nothing.
+	// Unobserved says describe or discover produced nothing usable this run, a
+	// non-zero exit or the timeout, or the executable changed between the two,
+	// so the fields below are empty and Warnings names the failure. The Server
+	// keeps the last answer it received and shows the warning; the Agent keeps
+	// nothing.
 	Unobserved bool `json:"unobserved,omitempty"`
-	// The discover answer, verbatim (plugincontract.DiscoverResponse).
+	// The describe answer (plugincontract.DescribeResponse) and the discover
+	// answer (plugincontract.DiscoverResponse) of the same run, verbatim.
 	Version           string                            `json:"version,omitempty"`
 	Description       l10n.Text                         `json:"description,omitempty"`
 	Declarations      []SettingDeclaration              `json:"declarations,omitempty"`
