@@ -8,11 +8,23 @@
 // Agent logs but never parses. Nothing else rides argv because
 // `/proc/<pid>/cmdline` is world-readable on Linux, so anything sensitive, the
 // private key above all, must ride the pipe.
+//
+// A Plugin runs as the Agent's user, root, with the Agent's environment, and
+// whatever it starts (a customer's command, say) inherits both. Environment
+// variables named `EASYSSL_*` are reserved for this contract and the
+// Agent: a Plugin sets only the ones it documents for the commands it runs.
+// What a Plugin starts lives in the Agent's process group and service, so a
+// process left running ends when the Agent restarts or is updated; a Plugin
+// that starts services hands them to the host's own service manager.
+//
+// An exit status is zero or not: a Plugin does not give other meanings to
+// particular non-zero statuses, so the Agent never reads one.
 package plugincontract
 
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -68,9 +80,12 @@ func Compatible(v string) bool {
 // process group when it is late, reporting that Plugin unobserved for the run.
 const AnswerTimeout = 10 * time.Second
 
-// Operation names, passed as the Plugin's single argv argument. A Plugin
-// receiving an operation it does not implement exits non-zero with a line on
-// stderr, and the Agent treats the operation as unsupported.
+// Operation names, passed as the Plugin's single argv argument. Every Plugin
+// implements all three. An operation added later comes with a new contract
+// version, and an Agent calls it only on a Plugin whose describe answer reports
+// that version or a later one, so no Plugin is ever asked for an operation it
+// does not know. A Plugin's own internal modes never take an operation name:
+// they are flags, so this list stays the contract's alone.
 const (
 	// OpDescribe asks the Plugin what it is: its identity, its description and
 	// the settings it declares. It takes no request body and reads nothing from
@@ -99,13 +114,13 @@ const (
 
 // Setting types. The type tells a consumer how to present and check a value; a
 // command is a shell script that may span lines and is run whole via
-// `/bin/sh -c`.
+// `/bin/sh -c`. A reader that does not know a type shows and edits the value as
+// text, and never refuses the declaration: a type is added only with a new
+// contract version, and an older reader still works with the value.
 const (
 	SettingTypeCommand = "command"
 	SettingTypePath    = "path"
 	SettingTypeText    = "text"
-	SettingTypeEnum    = "enum"
-	SettingTypeBool    = "boolean"
 )
 
 // SettingDeclaration is one setting a Plugin declares about itself. Values are
@@ -122,7 +137,10 @@ const (
 //   - a setting a later build adds is optional, or has a Default that
 //     reproduces the earlier behavior, and deploy treats it as absent when a
 //     request does not carry it;
-//   - a setting a later build drops is ignored when a request still carries it.
+//   - a setting a later build drops is ignored when a request still carries it;
+//   - whether a setting is Identity, and an Identity setting's Default, never
+//     change, since either would give every discovered Target of the Plugin a
+//     new discovery key, and the Targets made from them would no longer match.
 //
 // A build that cannot honor this is a new Plugin, under a new name. Adding a
 // Required setting with no Default is allowed but makes every existing Target
@@ -143,7 +161,9 @@ const (
 //   - a blank line separates paragraphs; a single line break is kept as one.
 //
 // Nothing else is interpreted, and HTML is shown as the characters typed, never
-// rendered: a subset this small has nothing to sanitize.
+// rendered: a subset this small has nothing to sanitize. There are no escapes:
+// a code span cannot contain a backtick, so text that holds one, a host path
+// or a program's output say, is written outside a code span (Code does this).
 type SettingDeclaration struct {
 	Key         string    `json:"key"`
 	Label       l10n.Text `json:"label"`
@@ -157,8 +177,8 @@ type SettingDeclaration struct {
 	Summary bool `json:"summary"`
 	// Identity marks a setting whose value identifies an installation point: the
 	// Server composes a discovered Target's discovery key from the values of every
-	// Identity setting, in declaration order, and matches discovered Targets to
-	// Targets on it. Distinct from Summary, which is what a reader sees a Target
+	// Identity setting, ordered by Key so that reordering the declarations changes
+	// nothing, and matches discovered Targets to Targets on it. Distinct from Summary, which is what a reader sees a Target
 	// called. A Plugin that reports discovered Targets flags at least one
 	// (ValidateDiscover).
 	Identity bool `json:"identity"`
@@ -172,8 +192,8 @@ type DescribeResponse struct {
 	Version         string `json:"version"`
 	// Description is the build's own account of what it installs onto, in the
 	// Markdown subset the web console renders, per language; optional.
-	Description l10n.Text            `json:"description,omitempty"`
-	Settings    []SettingDeclaration `json:"settings"`
+	Description  l10n.Text            `json:"description,omitempty"`
+	Declarations []SettingDeclaration `json:"declarations"`
 }
 
 // DiscoverResponse is OpDiscover's answer: what this build found on the host.
@@ -193,14 +213,14 @@ type DiscoverResponse struct {
 // DiscoveredTarget is one installation point a Plugin found. It carries no
 // key of its own: the Server composes one from the Identity settings.
 type DiscoveredTarget struct {
-	// PluginSettings is a value per declared setting key, opaque to the Server
-	// and resolved by the Plugin: a path arrives as the file it names, never
-	// as the spelling in the configuration. Promotion copies these into the
+	// Settings is a value per declared setting key, opaque to the Server and
+	// resolved by the Plugin: a path arrives as the file it names, never as
+	// the spelling in the configuration. Promotion copies these into the
 	// Target.
-	PluginSettings map[string]string `json:"pluginSettings"`
-	// PluginExtraData is shown and never read: stored opaquely, never copied
-	// into a Target, never compared. Values are in the Markdown subset.
-	PluginExtraData []ExtraDatum `json:"pluginExtraData"`
+	Settings map[string]string `json:"settings"`
+	// ExtraData is shown and never read: stored opaquely, never copied into a
+	// Target, never compared.
+	ExtraData []ExtraDatum `json:"extraData"`
 	// Certificate describes the certificate installed at that point, when the
 	// Plugin read one; absent when there is none yet or it could not be read.
 	// It is a statement about a concrete certificate, so a Plugin that knows
@@ -219,7 +239,8 @@ type DiscoveredCertificate struct {
 	// KeyType names the algorithm of its key when the Plugin can tell: one of
 	// ec_p256, ec_p384, rsa_2048, rsa_3072 or rsa_4096, the key types a
 	// Certificate can be requested with. Empty when unknown or another
-	// algorithm. A Certificate requested for the Target starts with it.
+	// algorithm. A Certificate requested for the Target starts with it. A
+	// reader that does not know a value reads it as empty.
 	KeyType string `json:"keyType,omitempty"`
 	// SHA256 is the lowercase hex SHA-256 of the leaf certificate's DER encoding.
 	// It is the one field that asserts a certificate was read, so a Plugin sends
@@ -231,8 +252,9 @@ type DiscoveredCertificate struct {
 }
 
 // ExtraDatum is one labeled item of a discovered Target's extra data. The
-// Label is text per language; the Value is what was found on the host, a
-// literal, and is the same in every language.
+// Label is text per language in the Markdown subset; the Value is what was
+// found on the host, a literal shown as the characters it holds, and is the
+// same in every language.
 type ExtraDatum struct {
 	Label l10n.Text `json:"label"`
 	Value string    `json:"value"`
@@ -256,16 +278,24 @@ type DeployRequest struct {
 	Settings map[string]string `json:"settings"`
 }
 
+// Code sets s as a code span in the Markdown subset, or leaves it as it is
+// when it holds a backtick, which no code span can contain.
+func Code(s string) string {
+	if s == "" || strings.Contains(s, "`") {
+		return s
+	}
+	return "`" + s + "`"
+}
+
 // OpDeploy answers with the process itself: exit 0 means the Certificate is
 // installed, anything else means it is not, stdout is what happened for a
 // person to read, and stderr is diagnostics. There is no response document,
 // because one could contradict the exit status. A Plugin that worked while the
 // install did not says so in its own output.
 //
-// The cost is that there is no envelope to add a field to. A Plugin that must
-// one day report structured facts about what it changed needs a mechanism that
-// does not exist here, and reintroducing one after this contract is published
-// is a breaking change for every Plugin.
+// A Plugin that must one day report structured facts about what it changed
+// gets a channel for them with a new contract version, which the Agent uses
+// only with Plugins that report it, as it does a new operation.
 //
 // `describe` and `discover` keep their JSON because they return structure.
 
@@ -282,17 +312,33 @@ func SummarySetting(decls []SettingDeclaration) string {
 }
 
 // ValidateSettings checks what a declaration set must satisfy whoever is
-// reading it: at most one setting may be Summary, and every Label and
-// Description is a text someone could show (l10n.Text.Validate). It lives here
-// so the Agent, at install time, and the Server, when the report arrives, reach
-// the same verdict.
+// reading it: every Key is a setting key (SettingKeyPattern) and appears once,
+// every setting has a Label with English and a Type, at most one is Summary,
+// and every Label and Description is a text someone could show
+// (l10n.Text.Validate). It lives here so the Agent, at install time, and the
+// Server, when the report arrives, reach the same verdict. A Type this build
+// does not know is accepted: a reader shows it as text.
 //
 // Two summary settings parse and every field is valid, so without this an
 // unlabeled Target is named after whichever the Plugin declared first, which
 // changes if its author reorders the list.
 func ValidateSettings(decls []SettingDeclaration) error {
 	var summaries []string
+	seen := map[string]bool{}
 	for _, d := range decls {
+		if !settingKey.MatchString(d.Key) {
+			return fmt.Errorf("plugincontract: %q is not a setting key: a letter, then up to 63 letters, digits or underscores", d.Key)
+		}
+		if seen[d.Key] {
+			return fmt.Errorf("plugincontract: setting %q is declared twice", d.Key)
+		}
+		seen[d.Key] = true
+		if d.Type == "" {
+			return fmt.Errorf("plugincontract: setting %q has no type", d.Key)
+		}
+		if d.Label[l10n.English] == "" {
+			return fmt.Errorf("plugincontract: setting %q has no label in English", d.Key)
+		}
 		if d.Summary {
 			summaries = append(summaries, d.Key)
 		}
@@ -308,6 +354,13 @@ func ValidateSettings(decls []SettingDeclaration) error {
 	}
 	return nil
 }
+
+// SettingKeyPattern is what a setting key looks like: a letter, then up to 63
+// letters, digits or underscores. A key is stored against values forever, so
+// it is held to characters every reader can carry.
+const SettingKeyPattern = `^[A-Za-z][A-Za-z0-9_]{0,63}$`
+
+var settingKey = regexp.MustCompile(SettingKeyPattern)
 
 // The bounds on a Plugin's answers. They are part of the contract, checked by
 // the Agent before it reports a Plugin and by the Server when the report
@@ -329,10 +382,10 @@ func ValidateDescribe(d DescribeResponse) error {
 	if d.Version == "" || len(d.Version) > MaxVersionBytes {
 		return fmt.Errorf("plugincontract: the version must be 1 to %d bytes, not %d", MaxVersionBytes, len(d.Version))
 	}
-	if len(d.Settings) > MaxSettings {
-		return fmt.Errorf("plugincontract: %d settings are declared, more than %d", len(d.Settings), MaxSettings)
+	if len(d.Declarations) > MaxSettings {
+		return fmt.Errorf("plugincontract: %d settings are declared, more than %d", len(d.Declarations), MaxSettings)
 	}
-	if err := ValidateSettings(d.Settings); err != nil {
+	if err := ValidateSettings(d.Declarations); err != nil {
 		return err
 	}
 	if err := d.Description.Validate(); err != nil {
@@ -342,7 +395,7 @@ func ValidateDescribe(d DescribeResponse) error {
 }
 
 // ValidateDiscover checks a discover answer against the settings the same
-// build declares (DescribeResponse.Settings): every text is one someone could
+// build declares (DescribeResponse.Declarations): every text is one someone could
 // show, a Plugin that reports discovered Targets must flag at least one
 // identity setting, and each discovered Target must give every identity
 // setting a non-empty value and name only declared settings, since a key the
@@ -357,7 +410,7 @@ func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
 		}
 	}
 	for i, t := range d.DiscoveredTargets {
-		for _, x := range t.PluginExtraData {
+		for _, x := range t.ExtraData {
 			if err := x.Label.Validate(); err != nil {
 				return fmt.Errorf("plugincontract: an extra-data label of discovered Target %d: %w", i, err)
 			}
@@ -378,13 +431,13 @@ func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
 		return errors.New("plugincontract: a Plugin that reports discovered Targets must mark at least one setting identity")
 	}
 	for i, t := range d.DiscoveredTargets {
-		for k := range t.PluginSettings {
+		for k := range t.Settings {
 			if !declared[k] {
 				return fmt.Errorf("plugincontract: discovered Target %d sets %q, which is not a declared setting", i, k)
 			}
 		}
 		for _, k := range identity {
-			if t.PluginSettings[k] == "" {
+			if t.Settings[k] == "" {
 				return fmt.Errorf("plugincontract: discovered Target %d gives identity setting %q no value", i, k)
 			}
 		}

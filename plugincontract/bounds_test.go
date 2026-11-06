@@ -18,7 +18,7 @@ func TestAnswersPastTheBoundsAreRefused(t *testing.T) {
 	for name, d := range map[string]DescribeResponse{
 		"no version":        {Description: text},
 		"long version":      {Version: strings.Repeat("1", MaxVersionBytes+1), Description: text},
-		"too many settings": {Version: "1.0.0", Description: text, Settings: make([]SettingDeclaration, MaxSettings+1)},
+		"too many settings": {Version: "1.0.0", Description: text, Declarations: make([]SettingDeclaration, MaxSettings+1)},
 	} {
 		if ValidateDescribe(d) == nil {
 			t.Errorf("%s was accepted", name)

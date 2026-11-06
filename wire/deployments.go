@@ -11,7 +11,9 @@ import "github.com/easyssl-io/easyssl-contract/l10n"
 // host. A Deployment can therefore only run on the Agent that holds the key.
 
 // Deployment states. A deployment records one push and is never rewritten
-// after it ends.
+// after it ends. An Agent that does not know a state a newer Server sends
+// treats the Deployment as finished and does not run it: running one twice is
+// worse than leaving one for the Server to time out.
 const (
 	DeploymentStatePending   = "pending"
 	DeploymentStateSucceeded = "succeeded"
@@ -96,7 +98,8 @@ type PluginRun struct {
 	StderrBytes int `json:"stderrBytes"`
 }
 
-// Stream names which of a Plugin's two outputs a chunk came from.
+// Stream names which of a Plugin's two outputs a chunk came from. A reader
+// that does not know a stream shows the chunk as stdout.
 const (
 	StreamStdout = "stdout"
 	StreamStderr = "stderr"

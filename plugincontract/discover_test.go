@@ -8,7 +8,7 @@ func TestValidateDiscoverRequiresIdentityForDiscoveredTargets(t *testing.T) {
 	if err := ValidateDiscover(settings, d); err != nil {
 		t.Fatalf("no discovered Targets, no identity: %v", err)
 	}
-	d.DiscoveredTargets = []DiscoveredTarget{{PluginSettings: map[string]string{"ssl_certificate": "/a.crt"}}}
+	d.DiscoveredTargets = []DiscoveredTarget{{Settings: map[string]string{"ssl_certificate": "/a.crt"}}}
 	if err := ValidateDiscover(settings, d); err == nil {
 		t.Fatal("discovered Targets with no identity setting were accepted")
 	}
@@ -16,11 +16,11 @@ func TestValidateDiscoverRequiresIdentityForDiscoveredTargets(t *testing.T) {
 	if err := ValidateDiscover(settings, d); err != nil {
 		t.Fatalf("valid: %v", err)
 	}
-	d.DiscoveredTargets[0].PluginSettings["ssl_certificate"] = ""
+	d.DiscoveredTargets[0].Settings["ssl_certificate"] = ""
 	if err := ValidateDiscover(settings, d); err == nil {
 		t.Fatal("an empty identity value was accepted")
 	}
-	d.DiscoveredTargets[0].PluginSettings = map[string]string{"ssl_certificate": "/a.crt", "bogus": "x"}
+	d.DiscoveredTargets[0].Settings = map[string]string{"ssl_certificate": "/a.crt", "bogus": "x"}
 	if err := ValidateDiscover(settings, d); err == nil {
 		t.Fatal("an undeclared setting key was accepted")
 	}

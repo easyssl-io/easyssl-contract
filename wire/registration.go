@@ -39,7 +39,9 @@ const (
 	CodeInternalError = "internal_error"
 )
 
-// Agent lifecycle states as reported to the Agent over the wire.
+// Agent lifecycle states as reported to the Agent over the wire. An Agent that
+// does not know a status a newer Server sends treats it as StatusPending: it
+// keeps checking in and does no work until it reads one it knows.
 const (
 	StatusPending = "pending"
 	StatusActive  = "active"
