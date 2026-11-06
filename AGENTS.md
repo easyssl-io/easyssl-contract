@@ -12,22 +12,21 @@ the Agent or the Server instead.
 
 ## Code Review Rules
 
-This module is the public interface between two independently deployed
-programs. An Agent already installed on a customer host cannot be force-upgraded,
-so one compiled against an older version of this module MUST keep working
-against a newer Server. Flag any of the following.
+This module is the public interface between separately installed programs: the
+Server, the Agent and each Plugin. An Agent already installed on a customer host
+cannot be force-upgraded, so one compiled against an older version of this
+module MUST keep working against a newer Server, and the same holds between the
+Agent and a Plugin, in both directions. The rules are in `README.md`
+(Versioning) and apply from the first release; until then everything stays at
+`0.0.1`. Flag any of the following.
 
-Neither contract has been externally published yet. `ProtocolVersion` and
-`ContractVersion` remain at `0.0.1` until their first external release; the
-MAJOR/MINOR/BUILD rules below govern changes starting with that release.
-
-- **Breaking a deployed Agent without a MAJOR bump**: removing a field, renaming
-  a JSON tag, changing a type, narrowing the values a field may hold, or making
-  an optional field required. Reusing an existing field for a new meaning breaks
-  compatibility while looking additive; add a new field instead.
-- **A `wire/` change that leaves `ProtocolVersion` alone.** MAJOR for breaking,
-  MINOR for additive, BUILD for a fix, moved in the same change. A MAJOR bump
-  additionally needs a deprecation path for Agents already installed.
+- **A breaking change made in one step**: removing a field, renaming a JSON tag,
+  changing a type, narrowing the values a field may hold, or making an optional
+  field required, without first adding the new way beside the old one and
+  marking the old one deprecated. Reusing an existing field for a new meaning
+  breaks compatibility while looking additive; add a new field instead.
+- **A reader that refuses what it does not know**: an unknown field, or an enum
+  value with no stated handling.
 - **Treating the Go identifier as the contract.** The JSON tag is. Renaming the
   identifier is safe; renaming the tag is not, however cosmetic it looks.
 - **Any new `require` in `go.mod`.** This module has zero dependencies and is
