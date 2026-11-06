@@ -293,18 +293,28 @@ func fill(text string, args []any) string {
 	for i := 0; i+1 < len(args); i += 2 {
 		values[fmt.Sprint(args[i])] = fmt.Sprint(args[i+1])
 	}
-	text = spanPlaceholder.ReplaceAllStringFunc(text, func(m string) string {
-		if v, ok := values[m[2:len(m)-2]]; ok && strings.Contains(v, "`") {
+	// One pass over the template, so a value is inserted once and never read
+	// for placeholders of its own.
+	return spannedPlaceholder.ReplaceAllStringFunc(text, func(m string) string {
+		open, close := strings.HasPrefix(m, "`"), strings.HasSuffix(m, "`")
+		name := strings.Trim(m, "`{}")
+		v, ok := values[name]
+		if !ok {
+			return m
+		}
+		if open && close && strings.Contains(v, "`") {
 			return v
 		}
-		return m
-	})
-	return placeholder.ReplaceAllStringFunc(text, func(m string) string {
-		if v, ok := values[m[1:len(m)-1]]; ok {
-			return v
+		out := v
+		if open {
+			out = "`" + out
 		}
-		return m
+		if close {
+			out += "`"
+		}
+		return out
 	})
 }
 
-var spanPlaceholder = regexp.MustCompile("`\\{([a-zA-Z][a-zA-Z0-9]*)\\}`")
+// spannedPlaceholder is a placeholder with the backticks around it, if any.
+var spannedPlaceholder = regexp.MustCompile("`?\\{[a-zA-Z][a-zA-Z0-9]*\\}`?")

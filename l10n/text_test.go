@@ -45,3 +45,16 @@ func TestFillLeavesAValueWithABacktickOutOfACodeSpan(t *testing.T) {
 		}
 	}
 }
+
+// A value is inserted once and never read for placeholders of its own, so a
+// host path that happens to spell one is shown as it is.
+func TestFillDoesNotReadAValueForPlaceholders(t *testing.T) {
+	got := fill("reading `{path}` failed: {err}", []any{"path", "/srv/a`{err}", "err", "EACCES"})
+	if want := "reading /srv/a`{err} failed: EACCES"; got != want {
+		t.Fatalf("fill = %q, want %q", got, want)
+	}
+	got = fill("{a}{b}", []any{"a", "{b}", "b", "x"})
+	if got != "{b}x" {
+		t.Fatalf("fill = %q, want %q", got, "{b}x")
+	}
+}
