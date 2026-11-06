@@ -15,16 +15,6 @@ import (
 // on the Certificate. To any other Agent, its own Organization's included, the
 // Certificate is indistinguishable from one that does not exist.
 
-// CSR route paths. "{id}" is the Certificate id from Command.RefID.
-const (
-	// RouteAgentCertificate is where the named Agent reads its signing work.
-	// Answered whatever the certificate's state, so a re-run can re-read it.
-	RouteAgentCertificate = "/api/v1/agent/certificates/{id}"
-	// RouteAgentCertificateCSR is where the named Agent submits the CSR it
-	// built. Stored write-once; the ACME order opens from here.
-	RouteAgentCertificateCSR = "/api/v1/agent/certificates/{id}/csr"
-)
-
 // Certificate key types: every type Let's Encrypt accepts for a subscriber
 // certificate. The Server names one on each request; the Agent generates it.
 // ECDSA P-256 is the default, being the smallest and the fastest; RSA exists
