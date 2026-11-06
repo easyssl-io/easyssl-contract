@@ -101,13 +101,14 @@ type RegistrationResponse struct {
 	// OrganizationName is what the web console calls the Organization this host
 	// now belongs to. Sent so the host can say where it is registered without a
 	// second call: in the installer's output, in `easyssl-agent status` and in the
-	// uninstall prompt.
-	OrganizationName string `json:"organizationName"`
+	// uninstall prompt. Omitted, like OrganizationID, when the Server could not
+	// read it: a message on the host never fails the exchange that carries it.
+	OrganizationName string `json:"organizationName,omitempty"`
 	// OrganizationID is the web console's public id for it (`org-…`). Sent beside
 	// the name because the name is not unique: two Organizations may carry the
 	// same one, so the name alone cannot tell an operator which one a host
 	// joined.
-	OrganizationID string `json:"organizationId"`
+	OrganizationID string `json:"organizationId,omitempty"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
@@ -137,8 +138,8 @@ type RegistrationStatus struct {
 	// learns here, so `easyssl-agent status` can name what the web console
 	// calls this host.
 	AgentID          string `json:"agentId"`
-	OrganizationName string `json:"organizationName"`
-	OrganizationID   string `json:"organizationId"`
+	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 }
 
 // CheckinResponse reports the current status, the display name the web console
@@ -149,8 +150,8 @@ type CheckinResponse struct {
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	// OrganizationName as above, so a rename in the web console reaches the host on
 	// its next check-in rather than staying wrong until it re-registers.
-	OrganizationName string `json:"organizationName"`
-	OrganizationID   string `json:"organizationId"`
+	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationID   string `json:"organizationId,omitempty"`
 	// ReportInventory asks the Agent to PUT its host inventory now: the
 	// fingerprint it sent differs from the one stored, or the Server holds no
 	// inventory for it at all, which is every Agent's first check-in after a
