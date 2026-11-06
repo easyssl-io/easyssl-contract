@@ -117,6 +117,5 @@ const (
 // CodeCertificateNotFound (404): no Certificate with that id is waiting on this
 // Agent, whether it never existed, was deleted, or names another Agent. The
 // Agent discards the command: no retry changes the answer. Any other 404, such
-// as a proxy's or an older Server's for a route it lacks, carries no such code
-// and is retried.
+// as a proxy's, carries no such code and is retried.
 const CodeCertificateNotFound = "certificate_not_found"
