@@ -18,10 +18,9 @@ import (
 	"github.com/easyssl-io/easyssl-contract/l10n"
 )
 
-// ContractVersion is this contract's version, MAJOR.MINOR.BUILD. Additive
-// fields bump MINOR, and a Plugin seeing a newer MINOR than it knows ignores
-// the fields it does not recognize. It stays at 0.0.1 until the first external
-// release, and the bump rules apply after it.
+// ContractVersion is the version of this module, the one release tag `wire`,
+// `plugincontract` and `l10n` share; README.md says what moves it. It stays at
+// 0.0.1 until the first release.
 const ContractVersion = "0.0.1"
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
