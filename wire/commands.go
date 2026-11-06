@@ -12,13 +12,9 @@ package wire
 
 import "time"
 
-// Push-channel route paths. All three carry the per-Agent bearer token and all
-// three require an active Agent: an Agent still awaiting authorization, or one
-// whose registration was removed, is refused exactly as it is on check-in.
-
-// Command types. An Agent that does not recognize a type reports it
-// unsupported rather than failing, so adding one here stays backward
-// compatible with Agents already in the field.
+// Command types. An Agent that does not recognize a type acks it
+// CommandStatusUnsupported rather than failing, so adding one here stays
+// backward compatible with Agents already in the field.
 const (
 	// CommandRequestCSR asks the Agent to generate a key and return a CSR for a
 	// Certificate the Server is issuing. RefID is the Certificate. The Agent signs
@@ -33,7 +29,9 @@ const (
 // Terminal states an Agent can report for a command. There is no "failed":
 // whether the work succeeded belongs to the resource the command refers to, so
 // a deployment that fails is recorded on the deployment. These say only whether
-// the Agent is done with the command.
+// the Agent is done with the command. A Server that does not know a status a
+// newer Agent sends reads it as CommandStatusAcked: the Agent is done either
+// way, and refusing the ack would hand it the command again.
 const (
 	// CommandStatusAcked: the Agent's attempt terminated. It may have failed;
 	// that outcome lives on the referenced resource.

@@ -36,10 +36,11 @@ type PluginInventory struct {
 	// ID is the Plugin's name, which is also its executable's name in the
 	// Plugin directory.
 	ID string `json:"id"`
-	// Digest is the SHA-256 of the executable as it is on disk at this run,
-	// not the catalog's figure recorded at install: the Server compares the
-	// two, and a mismatch is a binary someone replaced by hand.
-	Digest string `json:"digest"`
+	// SHA256 is the SHA-256 of the executable as it is on disk at this run,
+	// lowercase hex, not the catalog's figure recorded at install: the Server
+	// compares the two, and a mismatch is a binary someone replaced by hand.
+	// Every hash field of the contract is named after its algorithm.
+	SHA256 string `json:"sha256"`
 	// Describe and Discover are the Plugin's answers to OpDescribe and
 	// OpDiscover of this run, byte for byte as it printed them
 	// (plugincontract.DescribeResponse and DiscoverResponse). The Agent checks

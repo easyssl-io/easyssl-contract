@@ -28,9 +28,6 @@ import (
 // English is the source language and the fallback.
 const English = "en"
 
-// MaxLanguages bounds the languages one Text may carry.
-const MaxLanguages = 20
-
 // supported is every language easySSL speaks, the source language first. The
 // web console holds the same list; if either moves, the other moves.
 var supported = []string{English, "es"}
@@ -79,13 +76,42 @@ func FromLocale(getenv func(string) string) (string, bool) {
 	return "", false
 }
 
-// Text is one text in several languages: a base language code to the text in
-// that language. Empty means there is no text; one that is not empty holds
-// English, the fallback for every other language. Every language travels
-// because whoever reports a text cannot know who will read it.
+// Text is one text in several languages: a base language code (`en`, `es`,
+// `pt`; never a regional tag such as `pt-BR`) to the text in that language.
+// Empty means there is no text; one that is not empty holds English, the
+// fallback for every other language. Every language travels because whoever
+// reports a text cannot know who will read it.
+//
+// A reader keeps the languages it can read and drops the rest rather than
+// refusing the text: decoding drops every entry whose key is not a base
+// language code, so a text carrying a language a reader has never heard of, or
+// a key it cannot read as one, still shows in the languages it knows. There is
+// no limit on how many languages a text carries; whoever stores one bounds
+// its size.
 type Text map[string]string
 
 var languageCode = regexp.MustCompile(`^[a-z]{2,3}$`)
+
+// UnmarshalJSON decodes a Text, dropping every entry whose key is not a base
+// language code.
+func (t *Text) UnmarshalJSON(b []byte) error {
+	var raw map[string]string
+	if err := json.Unmarshal(b, &raw); err != nil {
+		return err
+	}
+	if raw == nil {
+		*t = nil
+		return nil
+	}
+	out := make(Text, len(raw))
+	for lang, s := range raw {
+		if languageCode.MatchString(lang) {
+			out[lang] = s
+		}
+	}
+	*t = out
+	return nil
+}
 
 // In returns the text in lang, else in English, else "".
 func (t Text) In(lang string) string {
@@ -96,14 +122,11 @@ func (t Text) In(lang string) string {
 }
 
 // Validate reports a Text nobody could show: one holding text without
-// English, a key that is not a base language code, or more languages than
-// MaxLanguages.
+// English, or, for a Text built in code rather than decoded, a key that is not
+// a base language code.
 func (t Text) Validate() error {
 	if len(t) == 0 {
 		return nil
-	}
-	if len(t) > MaxLanguages {
-		return fmt.Errorf("l10n: a text carries %d languages, more than %d", len(t), MaxLanguages)
 	}
 	for lang := range t {
 		if !languageCode.MatchString(lang) {
@@ -257,6 +280,11 @@ func Placeholders(text string) []string {
 
 // fill replaces each `{name}` with its value. A placeholder with no value is
 // left as written, which is what makes a mistake visible instead of silent.
+//
+// A placeholder set as a code span, `` `{name}` `` with nothing else between
+// the backticks, loses them when its value holds a backtick, since no code
+// span can contain one in the Markdown subset: the value is shown as plain
+// text rather than ending the span early.
 func fill(text string, args []any) string {
 	if len(args) == 0 {
 		return text
@@ -265,6 +293,12 @@ func fill(text string, args []any) string {
 	for i := 0; i+1 < len(args); i += 2 {
 		values[fmt.Sprint(args[i])] = fmt.Sprint(args[i+1])
 	}
+	text = spanPlaceholder.ReplaceAllStringFunc(text, func(m string) string {
+		if v, ok := values[m[2:len(m)-2]]; ok && strings.Contains(v, "`") {
+			return v
+		}
+		return m
+	})
 	return placeholder.ReplaceAllStringFunc(text, func(m string) string {
 		if v, ok := values[m[1:len(m)-1]]; ok {
 			return v
@@ -272,3 +306,5 @@ func fill(text string, args []any) string {
 		return m
 	})
 }
+
+var spanPlaceholder = regexp.MustCompile("`\\{([a-zA-Z][a-zA-Z0-9]*)\\}`")

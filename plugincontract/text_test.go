@@ -11,13 +11,13 @@ import (
 func TestValidateRefusesTextWithoutEnglish(t *testing.T) {
 	spanishOnly := l10n.Text{"es": "solo español"}
 	good := l10n.Text{"en": "English", "es": "Español"}
-	setting := SettingDeclaration{Key: "path", Label: good, Description: good, Identity: true}
-	target := DiscoveredTarget{PluginSettings: map[string]string{"path": "/x"}}
+	setting := SettingDeclaration{Key: "path", Type: SettingTypePath, Label: good, Description: good, Identity: true}
+	target := DiscoveredTarget{Settings: map[string]string{"path": "/x"}}
 
 	describes := map[string]DescribeResponse{
 		"description":         {Version: "1.0.0", Description: spanishOnly},
-		"label":               {Version: "1.0.0", Settings: []SettingDeclaration{{Key: "k", Label: spanishOnly}}},
-		"setting description": {Version: "1.0.0", Settings: []SettingDeclaration{{Key: "k", Label: good, Description: spanishOnly}}},
+		"label":               {Version: "1.0.0", Declarations: []SettingDeclaration{{Key: "k", Type: "text", Label: spanishOnly}}},
+		"setting description": {Version: "1.0.0", Declarations: []SettingDeclaration{{Key: "k", Type: "text", Label: good, Description: spanishOnly}}},
 	}
 	for name, d := range describes {
 		if ValidateDescribe(d) == nil {
@@ -27,7 +27,7 @@ func TestValidateRefusesTextWithoutEnglish(t *testing.T) {
 	discovers := map[string]DiscoverResponse{
 		"warning": {Warnings: []l10n.Text{good, spanishOnly}},
 		"extra-data label": {DiscoveredTargets: []DiscoveredTarget{{
-			PluginSettings: target.PluginSettings, PluginExtraData: []ExtraDatum{{Label: spanishOnly, Value: "v"}},
+			Settings: target.Settings, ExtraData: []ExtraDatum{{Label: spanishOnly, Value: "v"}},
 		}}},
 	}
 	for name, d := range discovers {
@@ -36,11 +36,11 @@ func TestValidateRefusesTextWithoutEnglish(t *testing.T) {
 		}
 	}
 
-	if err := ValidateDescribe(DescribeResponse{Version: "1.0.0", Description: good, Settings: []SettingDeclaration{setting}}); err != nil {
+	if err := ValidateDescribe(DescribeResponse{Version: "1.0.0", Description: good, Declarations: []SettingDeclaration{setting}}); err != nil {
 		t.Errorf("a valid describe answer was refused: %v", err)
 	}
 	ok := DiscoverResponse{Warnings: []l10n.Text{good},
-		DiscoveredTargets: []DiscoveredTarget{{PluginSettings: target.PluginSettings, PluginExtraData: []ExtraDatum{{Label: good, Value: "v"}}}}}
+		DiscoveredTargets: []DiscoveredTarget{{Settings: target.Settings, ExtraData: []ExtraDatum{{Label: good, Value: "v"}}}}}
 	if err := ValidateDiscover([]SettingDeclaration{setting}, ok); err != nil {
 		t.Errorf("a valid discover answer was refused: %v", err)
 	}
