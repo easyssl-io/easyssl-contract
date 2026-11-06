@@ -120,14 +120,30 @@ func compare(m message, raw json.RawMessage) string {
 	return placeholders(m.other, forms.Other, "other: ")
 }
 
-// placeholders compares the names two texts use. `{n}` is left out: a form
-// for exactly one may spell the number as a word.
+// placeholders compares the names two texts use, and the code spans: a span is
+// a literal the reader types or looks for, the same in every language, so a
+// translation keeps each one exactly. `{n}` is left out: a form for exactly one
+// may spell the number as a word.
 func placeholders(english, translated, prefix string) string {
 	a, b := names(english), names(translated)
 	if a != b {
 		return fmt.Sprintf("%splaceholders differ: English has {%s}, the translation has {%s}", prefix, a, b)
 	}
+	if a, b := codeSpans(english), codeSpans(translated); a != b {
+		return fmt.Sprintf("%scode spans differ: English has %s, the translation has %s", prefix, a, b)
+	}
 	return ""
+}
+
+// codeSpans is every backtick span of a text, sorted, as one comparable string.
+func codeSpans(text string) string {
+	parts := strings.Split(text, "`")
+	var spans []string
+	for i := 1; i < len(parts); i += 2 {
+		spans = append(spans, "`"+parts[i]+"`")
+	}
+	sort.Strings(spans)
+	return "[" + strings.Join(spans, " ") + "]"
 }
 
 func names(text string) string {
