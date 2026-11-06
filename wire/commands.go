@@ -38,8 +38,8 @@ const (
 	// the Certificate's domains and never chooses them, and the Server checks the
 	// returned CSR against them before using it.
 	CommandRequestCSR = "request_csr"
-	// CommandDeploy asks the Agent to place a certificate at a Target and run
-	// its reload command. RefID is the deployment.
+	// CommandDeploy asks the Agent to place a Certificate at a Target and run
+	// its reload command. RefID is the Deployment.
 	CommandDeploy = "deploy"
 )
 
@@ -51,15 +51,33 @@ const (
 	// CommandStatusAcked: the Agent's attempt terminated. It may have failed;
 	// that outcome lives on the referenced resource.
 	CommandStatusAcked = "acked"
-	// CommandStatusUnsupported: this Agent does not know this command type,
-	// which usually means it is older than the Server.
+	// CommandStatusUnsupported: this Agent cannot do what the command asks,
+	// which usually means it is older than the Server: it does not know the
+	// command type, or the work names something it does not know, such as a key
+	// type. The Server ends the referenced work, naming this Agent.
 	CommandStatusUnsupported = "unsupported"
 )
+
+// A command the Agent could not finish for a reason that may clear (the Server
+// unreachable or failing, the host's keystore refusing) is left unacked: it is
+// handed back on the next fetch and expires if the reason never clears, which
+// fails the referenced work naming this Agent. Acking it would end it with
+// nothing recorded.
 
 // CodeCommandExpired is returned when an Agent acks a command whose expiry has
 // passed (409). The Agent must not have acted on it: the instruction is stale
 // and is discarded rather than run late.
 const CodeCommandExpired = "command_expired"
+
+// More error codes of the push channel.
+const (
+	// CodeUnknownCommand: the acknowledged command is not one this Agent was
+	// given (404).
+	CodeUnknownCommand = "unknown_command"
+	// CodeStreamingUnsupported: the connection cannot carry an event stream,
+	// usually a proxy in between; the Agent falls back to polling (500).
+	CodeStreamingUnsupported = "streaming_unsupported"
+)
 
 // EventCommand is the SSE event name that tells an Agent something is waiting
 // for it. It is the only event type on the stream; an unknown event name is

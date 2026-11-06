@@ -15,7 +15,7 @@ import (
 // on the Certificate. To any other Agent, its own Organization's included, the
 // Certificate is indistinguishable from one that does not exist.
 
-// CSR route paths. "{id}" is the certificate id from Command.RefID.
+// CSR route paths. "{id}" is the Certificate id from Command.RefID.
 const (
 	// RouteAgentCertificate is where the named Agent reads its signing work.
 	// Answered whatever the certificate's state, so a re-run can re-read it.
@@ -38,7 +38,9 @@ const (
 	KeyTypeRSA4096 = "rsa_4096"
 )
 
-// KeyTypes lists every key type in the order a picker offers them.
+// KeyTypes lists every key type in the order a picker offers them. The list
+// grows: an Agent asked for a key type it does not know acks the command
+// unsupported.
 var KeyTypes = []string{KeyTypeECP256, KeyTypeECP384, KeyTypeRSA2048, KeyTypeRSA3072, KeyTypeRSA4096}
 
 // KeyTypeOf names a public key's type, or "" for a key no easySSL Certificate
@@ -122,3 +124,10 @@ const (
 	// never expires. A retry issues a fresh command.
 	CodeCSRMismatch = "csr_mismatch"
 )
+
+// CodeCertificateNotFound (404): no Certificate with that id is waiting on this
+// Agent, whether it never existed, was deleted, or names another Agent. The
+// Agent discards the command: no retry changes the answer. Any other 404, such
+// as a proxy's or an older Server's for a route it lacks, carries no such code
+// and is retried.
+const CodeCertificateNotFound = "certificate_not_found"
