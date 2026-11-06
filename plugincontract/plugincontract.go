@@ -252,9 +252,9 @@ type DiscoveredCertificate struct {
 }
 
 // ExtraDatum is one labeled item of a discovered Target's extra data. The
-// Label is text per language in the Markdown subset; the Value is what was
-// found on the host, a literal shown as the characters it holds, and is the
-// same in every language.
+// Label is plain text per language, a name and not prose; the Value is what
+// was found on the host, a literal shown as the characters it holds, never as
+// Markdown, and is the same in every language.
 type ExtraDatum struct {
 	Label l10n.Text `json:"label"`
 	Value string    `json:"value"`
