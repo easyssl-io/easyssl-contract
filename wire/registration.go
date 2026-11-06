@@ -5,26 +5,6 @@ package wire
 // Agents cannot be force-upgraded, so new fields are optional and existing
 // ones never change meaning.
 
-// Agent-facing route paths. None carries the web console session cookie:
-// registration is gated by the shared Organization registration key, and the
-// other routes by the per-Agent bearer token.
-const (
-	// RouteRegistrations is the check-in that creates a pending Agent and, on
-	// success, returns the one-time bearer token.
-	RouteRegistrations = "/api/v1/agent/registrations"
-	// RouteCheckin is the authenticated poll: while pending it reports status,
-	// and once active it also refreshes the Agent's last-seen.
-	RouteCheckin = "/api/v1/agent/checkin"
-	// RouteRegistration is the Agent's own registration. GET reads it; DELETE
-	// deactivates it, which is how an uninstalling Agent tells the Server its
-	// token is no longer in use. Deactivation invalidates the token and nothing
-	// else: the Agent's Targets and record stay, and a reactivation token minted
-	// in the web console brings the same Agent back on the same or another host.
-	// Removing the Agent for good is the operator's call in the web console, never
-	// something a host can do to its own record.
-	RouteRegistration = "/api/v1/agent/registration"
-)
-
 // Error codes returned in the ErrorResponse.Code field so the Agent can react
 // programmatically rather than parsing prose.
 const (
@@ -48,6 +28,11 @@ const (
 	// CodeInvalidRequest: the body is not JSON the route can read, or exceeds
 	// the route's size limit (400).
 	CodeInvalidRequest = "invalid_request"
+	// CodeContractUnsupported: the request's HeaderContractVersion is missing
+	// or not plugincontract.Compatible with the Server's, on any route (400).
+	// The Agent says so and that it needs updating, rather than retrying as if
+	// the Server were down.
+	CodeContractUnsupported = "contract_unsupported"
 	// CodeInternalError: the Server failed at something that is not the Agent's
 	// doing. Never a verdict on the Agent's credential: the Agent retries
 	// later (500).
@@ -86,8 +71,6 @@ type RegistrationRequest struct {
 	RegistrationKey   string      `json:"registrationKey,omitempty"`
 	ReactivationToken string      `json:"reactivationToken,omitempty"`
 	ProposedName      string      `json:"proposedName"`
-	AgentVersion      string      `json:"agentVersion"`
-	ProtocolVersion   string      `json:"protocolVersion"`
 	Diagnostics       Diagnostics `json:"diagnostics"`
 }
 
@@ -127,28 +110,22 @@ type RegistrationResponse struct {
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
-// the Authorization header, not here.
-//
-// The two versions are what this host is running now, reported on every poll: a host
-// upgraded in place by re-running the installer keeps its token and never
-// re-registers, so the check-in is the only route by which a new version
-// reaches the Server.
-//
-// An Agent older than ProtocolVersion sends none, and the Server then keeps
-// what it stored rather than overwriting it with the empty string.
+// the Authorization header, not here. The Agent's versions travel in headers
+// on every request (HeaderContractVersion), and the Server records them from
+// the check-in: a host upgraded in place by re-running the installer keeps its
+// token and never re-registers.
 type CheckinRequest struct {
-	AgentVersion    string `json:"agentVersion"`
-	ProtocolVersion string `json:"protocolVersion,omitempty"`
-	// InventoryFingerprint is InventoryFingerprint() over the host inventory the
-	// Agent computed for this check-in. The Server compares it with the one it
-	// stored and answers ReportInventory when they differ. Empty from an Agent
-	// older than the field, or from the installer's own check-in, which computes
-	// no inventory; the Server then asks the service for one on its next check-in.
+	// InventoryFingerprint is the fingerprint of the host inventory the Agent
+	// computed for this check-in, as it will send it in Inventory.Fingerprint.
+	// The Server compares it with the one it stored and answers ReportInventory
+	// when they differ. Empty from the installer's own check-in, which computes
+	// no inventory; the Server then asks the service for one on its next
+	// check-in.
 	InventoryFingerprint string `json:"inventoryFingerprint,omitempty"`
 }
 
 // RegistrationStatus is the read-only view of an Agent's own registration,
-// returned by GET RouteRegistration. Reading is deliberately free of side
+// returned by GET RouteAgentMe. Reading is deliberately free of side
 // effects: unlike a check-in it does NOT refresh last-seen, so an Agent (or an
 // operator running a status command) can ask "what am I?" without making a
 // stopped Agent look alive in the web console.
@@ -187,7 +164,7 @@ type CheckinResponse struct {
 	// PendingCommands is how many commands the Server is still waiting for this
 	// Agent to finish, counted at the moment of the check-in, so an idle Agent can
 	// skip the reconcile fetch that follows. It is a count and not the commands:
-	// the list is fetched from RouteCommands and nowhere else, so no copy can
+	// the list is fetched from RouteAgentCommands and nowhere else, so no copy can
 	// disagree with it.
 	//
 	// A pointer, because nil and zero mean opposite things. nil is a Server that

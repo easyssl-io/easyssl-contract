@@ -1,6 +1,6 @@
 // Package plugincontract is the contract between the easySSL Agent and every
-// Plugin executable, versioned independently of the Agent↔Server wire protocol
-// because Plugins and Agents release independently.
+// Plugin executable. It shares the module's one version with `wire`, which
+// says which Plugins an Agent runs and which Agents a Server answers.
 //
 // Every operation is one execution of the Plugin binary: the operation name is
 // the single argv argument, the JSON request rides stdin, the JSON response
@@ -23,6 +23,45 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. It stays at
 // 0.0.1 until the first release.
 const ContractVersion = "0.0.1"
+
+// PreviousBreakingVersion is the breaking version before ContractVersion's,
+// which a build still speaks to: a Server still answers an Agent built against
+// it, and an Agent still runs a Plugin built against it. Empty until a release
+// moves the breaking version for the first time; that release sets it.
+const PreviousBreakingVersion = ""
+
+// BreakingVersion is the part of a semantic version that a breaking change
+// moves: `0.<minor>` while the major number is 0, the major number from 1.0.0
+// on. ok is false for anything that is not MAJOR.MINOR.PATCH in digits.
+func BreakingVersion(v string) (breaking string, ok bool) {
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return "", false
+	}
+	for _, p := range parts {
+		if p == "" || strings.Trim(p, "0123456789") != "" || (len(p) > 1 && p[0] == '0') {
+			return "", false
+		}
+	}
+	if parts[0] == "0" {
+		return "0." + parts[1], true
+	}
+	return parts[0], true
+}
+
+// Compatible reports whether a build of this contract speaks to a peer built
+// against version v: the same breaking version as ContractVersion, or
+// PreviousBreakingVersion. A Server refuses any other Agent with
+// `contract_unsupported`, and an Agent refuses any other Plugin, so a mismatch
+// is named rather than failing on a field one side does not know.
+func Compatible(v string) bool {
+	got, ok := BreakingVersion(v)
+	if !ok {
+		return false
+	}
+	own, _ := BreakingVersion(ContractVersion)
+	return got == own || (PreviousBreakingVersion != "" && got == PreviousBreakingVersion)
+}
 
 // AnswerTimeout bounds each describe and discover execution. The Agent runs
 // both before every check-in, each Plugin at once, and kills a Plugin's whole

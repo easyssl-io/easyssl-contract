@@ -10,20 +10,6 @@ import "github.com/easyssl-io/easyssl-contract/l10n"
 // the Certificate id this resource names and hands it to the Plugin on the
 // host. A Deployment can therefore only run on the Agent that holds the key.
 
-// Deployment route paths. Both carry the per-Agent bearer token and answer
-// only the Agent the deployment names; to any other Agent the deployment is
-// indistinguishable from one that does not exist.
-const (
-	// RouteAgentDeployment is where the Agent reads a deployment's work:
-	// the material, and the resolved value of every setting the Plugin will be
-	// called with. A deployment already finished answers with its state and no
-	// material, so a re-delivered command is acknowledged without re-running.
-	RouteAgentDeployment = "/api/v1/agent/deployments/{id}"
-	// RouteAgentDeploymentResult is RouteAgentDeployment + "/result": the
-	// Agent's terminal report, write-once.
-	RouteAgentDeploymentResult = "/api/v1/agent/deployments/{id}/result"
-)
-
 // Deployment states. A deployment records one push and is never rewritten
 // after it ends.
 const (

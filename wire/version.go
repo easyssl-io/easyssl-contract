@@ -1,6 +1,20 @@
 package wire
 
-// ProtocolVersion is the version of this module, the one release tag `wire`,
-// `plugincontract` and `l10n` share; README.md says what moves it. It stays at
-// 0.0.1 until the first release.
-const ProtocolVersion = "0.0.1"
+import "github.com/easyssl-io/easyssl-contract/plugincontract"
+
+// ContractVersion is this module's one version, the same constant
+// plugincontract declares: `wire`, `plugincontract` and `l10n` are released
+// together under one tag, so an Agent and a Server compare one number.
+const ContractVersion = plugincontract.ContractVersion
+
+// Every request an Agent makes carries these two headers, so the Server learns
+// which build is speaking before it reads a body: the Agent's own version in
+// User-Agent, as UserAgentPrefix followed by it, and the contract version it
+// was built against in HeaderContractVersion. A Server answers an Agent whose
+// contract version is not plugincontract.Compatible with CodeContractUnsupported
+// on every route, so an Agent too old or too new for it is told so rather than
+// failing on a field one side does not know.
+const (
+	HeaderContractVersion = "Easyssl-Contract-Version"
+	UserAgentPrefix       = "easyssl-agent/"
+)

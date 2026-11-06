@@ -15,19 +15,6 @@ import "time"
 // Push-channel route paths. All three carry the per-Agent bearer token and all
 // three require an active Agent: an Agent still awaiting authorization, or one
 // whose registration was removed, is refused exactly as it is on check-in.
-const (
-	// RouteEvents is the long-lived stream (SSE). One connection per Agent
-	// carries every command type, rather than one connection per capability,
-	// so an Agent behind a restrictive network has a single thing to keep open.
-	RouteEvents = "/api/v1/agent/events"
-	// RouteCommands lists the commands an Agent has not finished yet. The
-	// Agent reads this on every (re)connect and on every poll, which is what
-	// actually guarantees a command runs.
-	RouteCommands = "/api/v1/agent/commands"
-	// RouteCommandAck is RouteCommands + "/{id}/ack": the Agent reporting that
-	// it has finished with a command, one way or another.
-	RouteCommandAck = "/api/v1/agent/commands/{id}/ack"
-)
 
 // Command types. An Agent that does not recognize a type reports it
 // unsupported rather than failing, so adding one here stays backward
@@ -91,7 +78,7 @@ const (
 // first time an event goes missing.
 const EventCommand = "command"
 
-// Command is one instruction for an Agent, as returned by RouteCommands. RefID
+// Command is one instruction for an Agent, as returned by RouteAgentCommands. RefID
 // names the resource holding the actual work; the Agent fetches that resource
 // by its own route. Nothing here describes the work itself.
 type Command struct {
