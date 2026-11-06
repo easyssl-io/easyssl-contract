@@ -43,5 +43,11 @@ release on.
 7. **A released message stays readable.** Every message has an example kept per
    released version, which every later build must still decode.
 8. **Versions come from release tags**, never from a constant edited by hand.
+9. **One encoding.** A time is RFC 3339 in UTC and its name ends in `At`
+   (`notBefore` and `notAfter` keep their X.509 names). A list is always
+   present, `[]` when empty, so a reader never tells "none" from "not sent". A
+   scalar that is unknown or does not apply is omitted, never sent as `""` or
+   a zero time standing for something. `TestEncodingRules` checks the names
+   and the lists.
 
 Until the first release everything stays at `0.0.1`.

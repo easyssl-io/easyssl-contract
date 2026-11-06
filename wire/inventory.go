@@ -56,7 +56,7 @@ type PluginInventory struct {
 	Unobserved bool `json:"unobserved,omitempty"`
 	// Warnings is the Agent's own account of why the Plugin is Unobserved, in
 	// every language. A Plugin's own warnings are inside Discover.
-	Warnings []l10n.Text `json:"warnings,omitempty"`
+	Warnings []l10n.Text `json:"warnings"`
 }
 
 // KeyInfo is one private key in the Agent's keystore, by its public half only.

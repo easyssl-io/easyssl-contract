@@ -44,7 +44,7 @@ type DeploymentWork struct {
 	PluginID       string            `json:"pluginId"`
 	CertificatePem string            `json:"certificatePem,omitempty"`
 	ChainPem       string            `json:"chainPem,omitempty"`
-	Settings       map[string]string `json:"settings,omitempty"`
+	Settings       map[string]string `json:"settings"`
 }
 
 // DeploymentResult is the Agent's terminal report: whether the install
@@ -88,7 +88,7 @@ type PluginRun struct {
 	// stderr message came before or after a line of stdout. Consecutive lines from
 	// the same stream are one chunk, so a Plugin that writes only to stdout
 	// produces exactly one.
-	Output []OutputChunk `json:"output,omitempty"`
+	Output []OutputChunk `json:"output"`
 	// StdoutBytes and StderrBytes are what the Plugin produced, which is not
 	// always what Output carries: a stream past the Agent's bound is cut.
 	// Counts rather than a `truncated` flag so there is no boolean that can

@@ -95,7 +95,7 @@ type RegistrationResponse struct {
 	// will need before the first push arrives and fails for want of one. Empty
 	// after a fresh registration, which has no Targets yet. Each entry is a
 	// Plugin id as the Marketplace catalog names it.
-	RequiredPlugins []string `json:"requiredPlugins,omitempty"`
+	RequiredPlugins []string `json:"requiredPlugins"`
 	NextPollSeconds int      `json:"nextPollSeconds"`
 	MarketplaceURL  string   `json:"marketplaceUrl"`
 	// OrganizationName is what the web console calls the Organization this host
