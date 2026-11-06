@@ -40,11 +40,11 @@ const (
 )
 
 // Agent lifecycle states as reported to the Agent over the wire. An Agent that
-// does not know a status a newer Server sends treats it as StatusPending: it
+// does not know a status a newer Server sends treats it as AgentStatusPending: it
 // keeps checking in and does no work until it reads one it knows.
 const (
-	StatusPending = "pending"
-	StatusActive  = "active"
+	AgentStatusPending = "pending"
+	AgentStatusActive  = "active"
 )
 
 // Diagnostics is the host information the Agent captures at install and
@@ -80,8 +80,7 @@ type RegistrationRequest struct {
 // here), the Agent's public ID, the status the Agent starts in (pending after a
 // registration key, active after a reactivation token), the poll cadence the
 // Agent should use, and the web console Marketplace URL to show before the
-// operator may interrupt the authorization wait. MarketplaceURL is optional
-// for compatibility with older Servers.
+// operator may interrupt the authorization wait.
 type RegistrationResponse struct {
 	AgentToken string `json:"agentToken"`
 	AgentID    string `json:"agentId"`
@@ -90,25 +89,25 @@ type RegistrationResponse struct {
 	// reactivation it is the deactivated Agent's name, which the host did not
 	// choose and has no other way to learn; after a fresh registration it is
 	// the name the host proposed.
-	DisplayName string `json:"displayName,omitempty"`
+	DisplayName string `json:"displayName"`
 	// RequiredPlugins names the Plugins this Agent's Targets are configured
 	// with, so a reactivated host can offer to install what its Deployments
 	// will need before the first push arrives and fails for want of one. Empty
 	// after a fresh registration, which has no Targets yet. Each entry is a
 	// Plugin id as the Marketplace catalog names it.
-	RequiredPlugins []string `json:"requiredPlugins,omitempty"`
+	RequiredPlugins []string `json:"requiredPlugins"`
 	NextPollSeconds int      `json:"nextPollSeconds"`
-	MarketplaceURL  string   `json:"marketplaceUrl,omitempty"`
+	MarketplaceURL  string   `json:"marketplaceUrl"`
 	// OrganizationName is what the web console calls the Organization this host
 	// now belongs to. Sent so the host can say where it is registered without a
 	// second call: in the installer's output, in `easyssl-agent status` and in the
 	// uninstall prompt.
-	OrganizationName string `json:"organizationName,omitempty"`
+	OrganizationName string `json:"organizationName"`
 	// OrganizationID is the web console's public id for it (`org-…`). Sent beside
 	// the name because the name is not unique: two Organizations may carry the
 	// same one, so the name alone cannot tell an operator which one a host
 	// joined.
-	OrganizationID string `json:"organizationId,omitempty"`
+	OrganizationID string `json:"organizationId"`
 }
 
 // CheckinRequest is the authenticated poll body; the bearer token travels in
@@ -137,11 +136,9 @@ type RegistrationStatus struct {
 	// AgentID is the Agent's public id, which the host keeps nowhere and
 	// learns here, so `easyssl-agent status` can name what the web console
 	// calls this host.
-	AgentID string `json:"agentId,omitempty"`
-	// OrganizationName as above: an Agent registered before this field existed
-	// learns it here, on the first read after the Server is updated.
-	OrganizationName string `json:"organizationName,omitempty"`
-	OrganizationID   string `json:"organizationId,omitempty"`
+	AgentID          string `json:"agentId"`
+	OrganizationName string `json:"organizationName"`
+	OrganizationID   string `json:"organizationId"`
 }
 
 // CheckinResponse reports the current status, the display name the web console
@@ -151,17 +148,14 @@ type CheckinResponse struct {
 	DisplayName     string `json:"displayName"`
 	NextPollSeconds int    `json:"nextPollSeconds"`
 	// OrganizationName as above, so a rename in the web console reaches the host on
-	// its next check-in rather than staying wrong until it re-registers. The id
-	// never changes, and rides along so a host registered before these fields
-	// existed learns both at once.
-	OrganizationName string `json:"organizationName,omitempty"`
-	OrganizationID   string `json:"organizationId,omitempty"`
+	// its next check-in rather than staying wrong until it re-registers.
+	OrganizationName string `json:"organizationName"`
+	OrganizationID   string `json:"organizationId"`
 	// ReportInventory asks the Agent to PUT its host inventory now: the
 	// fingerprint it sent differs from the one stored, or the Server holds no
 	// inventory for it at all, which is every Agent's first check-in after a
-	// Server that lost its data. Absent (false) otherwise, and from a Server
-	// older than the field, so an Agent never sends a document nobody asked
-	// for.
+	// Server that lost its data. Absent (false) otherwise, so an Agent never
+	// sends a document nobody asked for.
 	ReportInventory bool `json:"reportInventory,omitempty"`
 	// PendingCommands is how many commands the Server is still waiting for this
 	// Agent to finish, counted at the moment of the check-in, so an idle Agent can
@@ -169,19 +163,14 @@ type CheckinResponse struct {
 	// the list is fetched from RouteAgentCommands and nowhere else, so no copy can
 	// disagree with it.
 	//
-	// A pointer, because nil and zero mean opposite things. nil is a Server that
-	// does not report this, and the Agent must fetch as it always did; 0 is a
-	// Server saying there is nothing, and the Agent may skip. Reading a missing
-	// field as zero would make a newer Agent stop fetching from an older Server.
-	//
 	// It may be stale by the time the Agent reads it, because a command can be
 	// created immediately after the count. That costs at most one cadence, since
 	// the event stream nudges and the next check-in counts again. It is never used
 	// to conclude that a command exists, only that none did.
 	//
-	// Absent while the Agent is pending: every command route refuses a pending
+	// Zero while the Agent is pending: every command route refuses a pending
 	// Agent.
-	PendingCommands *int `json:"pendingCommands,omitempty"`
+	PendingCommands int `json:"pendingCommands"`
 }
 
 // ErrorResponse is the JSON body returned with a non-2xx status; Code is one of

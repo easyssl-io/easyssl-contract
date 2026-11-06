@@ -184,11 +184,12 @@ type SettingDeclaration struct {
 	Identity bool `json:"identity"`
 }
 
-// DescribeResponse is OpDescribe's answer: who this build is and what it
-// declares, the same wherever it runs.
+// DescribeResponse is OpDescribe's answer: what this build is and what it
+// declares, the same wherever it runs. It carries no id: a Plugin's id is the
+// name of its executable, which is how the Agent runs it and the Marketplace
+// offers it, so a second copy could only disagree.
 type DescribeResponse struct {
 	ContractVersion string `json:"contractVersion"`
-	Name            string `json:"name"`
 	Version         string `json:"version"`
 	// Description is the build's own account of what it installs onto, in the
 	// Markdown subset the web console renders, per language; optional.
@@ -264,10 +265,9 @@ type ExtraDatum struct {
 // as paths: a Plugin that installs through an API needs no file, and one that
 // does need files creates them itself, inside WorkDir.
 type DeployRequest struct {
-	ContractVersion string `json:"contractVersion"`
-	CertificatePem  string `json:"certificatePem"`
-	ChainPem        string `json:"chainPem"`
-	PrivateKeyPem   string `json:"privateKeyPem"`
+	CertificatePem string `json:"certificatePem"`
+	ChainPem       string `json:"chainPem"`
+	PrivateKeyPem  string `json:"privateKeyPem"`
 	// WorkDir is a directory the Agent created for this run and removes after
 	// it, however it ends. A Plugin that materializes files puts them there, so
 	// a run the Agent had to kill cannot leave key material behind; a Plugin
