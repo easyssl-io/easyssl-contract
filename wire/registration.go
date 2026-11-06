@@ -40,11 +40,11 @@ const (
 )
 
 // Agent lifecycle states as reported to the Agent over the wire. An Agent that
-// does not know a status a newer Server sends treats it as StatusPending: it
+// does not know a status a newer Server sends treats it as AgentStatusPending: it
 // keeps checking in and does no work until it reads one it knows.
 const (
-	StatusPending = "pending"
-	StatusActive  = "active"
+	AgentStatusPending = "pending"
+	AgentStatusActive  = "active"
 )
 
 // Diagnostics is the host information the Agent captures at install and

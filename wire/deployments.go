@@ -10,14 +10,14 @@ import "github.com/easyssl-io/easyssl-contract/l10n"
 // the Certificate id this resource names and hands it to the Plugin on the
 // host. A Deployment can therefore only run on the Agent that holds the key.
 
-// Deployment states. A deployment records one push and is never rewritten
-// after it ends. An Agent that does not know a state a newer Server sends
+// Deployment statuses. A deployment records one push and is never rewritten
+// after it ends. An Agent that does not know a status a newer Server sends
 // treats the Deployment as finished and does not run it: running one twice is
 // worse than leaving one for the Server to time out.
 const (
-	DeploymentStatePending   = "pending"
-	DeploymentStateSucceeded = "succeeded"
-	DeploymentStateFailed    = "failed"
+	DeploymentStatusPending   = "pending"
+	DeploymentStatusSucceeded = "succeeded"
+	DeploymentStatusFailed    = "failed"
 )
 
 // CodeDeploymentFinished is returned when a result arrives for a deployment
@@ -39,7 +39,7 @@ const CodeDeploymentNotFound = "deployment_not_found"
 // queued, so what ran never depends on a later edit.
 type DeploymentWork struct {
 	ID             string            `json:"id"`
-	State          string            `json:"state"`
+	Status         string            `json:"status"`
 	CertificateID  string            `json:"certificateId"`
 	KeyFingerprint string            `json:"keyFingerprint,omitempty"`
 	PluginID       string            `json:"pluginId"`
