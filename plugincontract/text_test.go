@@ -15,9 +15,9 @@ func TestValidateRefusesTextWithoutEnglish(t *testing.T) {
 	target := DiscoveredTarget{PluginSettings: map[string]string{"path": "/x"}}
 
 	describes := map[string]DescribeResponse{
-		"description":         {Description: spanishOnly},
-		"label":               {Settings: []SettingDeclaration{{Key: "k", Label: spanishOnly}}},
-		"setting description": {Settings: []SettingDeclaration{{Key: "k", Label: good, Description: spanishOnly}}},
+		"description":         {Version: "1.0.0", Description: spanishOnly},
+		"label":               {Version: "1.0.0", Settings: []SettingDeclaration{{Key: "k", Label: spanishOnly}}},
+		"setting description": {Version: "1.0.0", Settings: []SettingDeclaration{{Key: "k", Label: good, Description: spanishOnly}}},
 	}
 	for name, d := range describes {
 		if ValidateDescribe(d) == nil {
@@ -36,7 +36,7 @@ func TestValidateRefusesTextWithoutEnglish(t *testing.T) {
 		}
 	}
 
-	if err := ValidateDescribe(DescribeResponse{Description: good, Settings: []SettingDeclaration{setting}}); err != nil {
+	if err := ValidateDescribe(DescribeResponse{Version: "1.0.0", Description: good, Settings: []SettingDeclaration{setting}}); err != nil {
 		t.Errorf("a valid describe answer was refused: %v", err)
 	}
 	ok := DiscoverResponse{Warnings: []l10n.Text{good},

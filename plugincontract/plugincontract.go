@@ -14,6 +14,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/easyssl-io/easyssl-contract/l10n"
 )
@@ -22,6 +23,11 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. It stays at
 // 0.0.1 until the first release.
 const ContractVersion = "0.0.1"
+
+// AnswerTimeout bounds each describe and discover execution. The Agent runs
+// both before every check-in, each Plugin at once, and kills a Plugin's whole
+// process group when it is late, reporting that Plugin unobserved for the run.
+const AnswerTimeout = 10 * time.Second
 
 // Operation names, passed as the Plugin's single argv argument. A Plugin
 // receiving an operation it does not implement exits non-zero with a line on
@@ -264,9 +270,29 @@ func ValidateSettings(decls []SettingDeclaration) error {
 	return nil
 }
 
+// The bounds on a Plugin's answers. They are part of the contract, checked by
+// the Agent before it reports a Plugin and by the Server when the report
+// arrives, so a Plugin past one is refused on the host, where it shows as
+// unobserved, rather than on the Server.
+const (
+	// MaxVersionBytes bounds a describe answer's version.
+	MaxVersionBytes = 64
+	// MaxSettings bounds the settings one describe answer declares.
+	MaxSettings = 64
+	// MaxDiscoveredTargets bounds the Targets one discover answer reports.
+	MaxDiscoveredTargets = 200
+)
+
 // ValidateDescribe checks a whole describe answer, ValidateSettings included:
-// every text is one someone could show.
+// the version is present and bounded, the settings are bounded, and every text
+// is one someone could show.
 func ValidateDescribe(d DescribeResponse) error {
+	if d.Version == "" || len(d.Version) > MaxVersionBytes {
+		return fmt.Errorf("plugincontract: the version must be 1 to %d bytes, not %d", MaxVersionBytes, len(d.Version))
+	}
+	if len(d.Settings) > MaxSettings {
+		return fmt.Errorf("plugincontract: %d settings are declared, more than %d", len(d.Settings), MaxSettings)
+	}
 	if err := ValidateSettings(d.Settings); err != nil {
 		return err
 	}
@@ -283,6 +309,9 @@ func ValidateDescribe(d DescribeResponse) error {
 // setting a non-empty value and name only declared settings, since a key the
 // declarations do not know could be neither shown nor promoted.
 func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
+	if len(d.DiscoveredTargets) > MaxDiscoveredTargets {
+		return fmt.Errorf("plugincontract: %d discovered Targets are reported, more than %d", len(d.DiscoveredTargets), MaxDiscoveredTargets)
+	}
 	for i, w := range d.Warnings {
 		if err := w.Validate(); err != nil {
 			return fmt.Errorf("plugincontract: warning %d: %w", i, err)
