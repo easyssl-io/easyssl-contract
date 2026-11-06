@@ -40,6 +40,18 @@ const (
 	// or the registration was rejected. An Agent cannot distinguish the two, by
 	// design (401).
 	CodeUnknownToken = "unknown_token"
+	// CodeAgentNotActive: the token is this Agent's, but the Agent is still
+	// awaiting authorization, so no route other than check-in and the
+	// registration read answers it yet (403). The check-in already tells a pending
+	// Agent its status, so naming it here reveals nothing new.
+	CodeAgentNotActive = "agent_not_active"
+	// CodeInvalidRequest: the body is not JSON the route can read, or exceeds
+	// the route's size limit (400).
+	CodeInvalidRequest = "invalid_request"
+	// CodeInternalError: the Server failed at something that is not the Agent's
+	// doing. Never a verdict on the Agent's credential: the Agent retries
+	// later (500).
+	CodeInternalError = "internal_error"
 )
 
 // Agent lifecycle states as reported to the Agent over the wire.

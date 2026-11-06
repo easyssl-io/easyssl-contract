@@ -38,6 +38,10 @@ const (
 // safely and its second report lands here.
 const CodeDeploymentFinished = "deployment_finished"
 
+// CodeDeploymentNotFound (404): no Deployment with that id is this Agent's. The
+// Agent discards the command, as for CodeCertificateNotFound.
+const CodeDeploymentNotFound = "deployment_not_found"
+
 // DeploymentWork is what RouteAgentDeployment answers while the Deployment is
 // pending. KeyFingerprint names the Certificate's key the way the Agent's
 // keystore names it (the lowercase hex SHA-256 of its SubjectPublicKeyInfo);
