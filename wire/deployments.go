@@ -38,7 +38,6 @@ const CodeDeploymentNotFound = "deployment_not_found"
 // owning Plugin declares, snapshotted and recorded when the Deployment was
 // queued, so what ran never depends on a later edit.
 type DeploymentWork struct {
-	ID             string            `json:"id"`
 	Status         string            `json:"status"`
 	CertificateID  string            `json:"certificateId"`
 	KeyFingerprint string            `json:"keyFingerprint,omitempty"`

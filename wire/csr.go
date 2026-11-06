@@ -81,7 +81,6 @@ func ValidKeyType(t string) bool {
 // one: the Server records the fingerprint of every CSR it accepts and rejects a
 // CSR from a different key.
 type CSRWork struct {
-	CertificateID  string   `json:"certificateId"`
 	Domains        []string `json:"domains"`
 	KeyType        string   `json:"keyType"`
 	KeyFingerprint string   `json:"keyFingerprint,omitempty"`

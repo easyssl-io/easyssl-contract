@@ -10,8 +10,6 @@ package wire
 // commands on its regular poll, which is what makes a lost, duplicated or
 // out-of-order event harmless.
 
-import "time"
-
 // Command types. An Agent that does not recognize a type acks it
 // CommandStatusUnsupported rather than failing, so adding one here stays
 // backward compatible with Agents already in the field.
@@ -78,13 +76,13 @@ const EventCommand = "command"
 
 // Command is one instruction for an Agent, as returned by RouteAgentCommands. RefID
 // names the resource holding the actual work; the Agent fetches that resource
-// by its own route. Nothing here describes the work itself.
+// by its own route, and RefID is the only id of it the Agent uses. Nothing here
+// describes the work itself, and no time: the Server alone decides when a
+// command has expired.
 type Command struct {
-	ID        string    `json:"id"`
-	Type      string    `json:"type"`
-	RefID     string    `json:"refId"`
-	CreatedAt time.Time `json:"createdAt"`
-	ExpiresAt time.Time `json:"expiresAt"`
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	RefID string `json:"refId"`
 }
 
 // CommandsResponse is the reconcile fetch, oldest command first so an Agent
