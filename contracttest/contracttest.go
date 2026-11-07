@@ -121,11 +121,54 @@ func walk(v reflect.Value, set map[string]bool) {
 			}
 			if hasOption(opts, "omitempty") || hasOption(opts, "omitzero") {
 				key := t.String() + "." + name
-				set[key] = set[key] || !v.Field(i).IsZero()
+				set[key] = set[key] || !omitted(v.Field(i), opts)
 			}
 			walk(v.Field(i), set)
 		}
 	}
+}
+
+// omitted says whether encoding/json leaves a field with these options out:
+// `omitempty` drops false, 0, a nil pointer or interface, and an empty string,
+// slice, array or map, so an example that sets an optional map to `{}` has not
+// set it; `omitzero` drops the zero value, or what the type's own IsZero calls
+// zero.
+func omitted(v reflect.Value, opts string) bool {
+	if hasOption(opts, "omitzero") {
+		if v.Kind() == reflect.Pointer && v.IsNil() {
+			return true
+		}
+		if z, ok := isZeroer(v); ok {
+			if z {
+				return true
+			}
+		} else if v.IsZero() {
+			return true
+		}
+	}
+	if hasOption(opts, "omitempty") {
+		switch v.Kind() {
+		case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+			return v.Len() == 0
+		case reflect.Struct:
+			return false
+		default:
+			return v.IsZero()
+		}
+	}
+	return false
+}
+
+// isZeroer calls v's own IsZero method when it has one.
+func isZeroer(v reflect.Value) (zero, ok bool) {
+	if !v.CanInterface() {
+		return false, false
+	}
+	z, ok := v.Interface().(interface{ IsZero() bool })
+	if !ok {
+		return false, false
+	}
+	return z.IsZero(), true
 }
 
 func hasOption(opts, want string) bool {
