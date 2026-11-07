@@ -23,7 +23,7 @@ func TestMessages(t *testing.T) {
 			}},
 			Party: catalog.PartyFirst, Publisher: "easySSL", SourceURL: "https://github.com/easyssl-io/easyssl-plugins/tree/main/generic-cli",
 			Artifacts: []catalog.Artifact{{
-				OS: "linux", Arch: "amd64", SHA256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+				OS: "linux", Arch: "amd64", SHA256: "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823",
 				URL: wire.APIPrefix + catalog.PluginArtifactPath("generic-cli", "linux", "amd64"),
 			}},
 		}}},

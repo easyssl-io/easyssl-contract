@@ -32,7 +32,7 @@
         {
           "os": "linux",
           "arch": "amd64",
-          "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+          "sha256": "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823",
           "url": "/api/v1/download/plugins/generic-cli/linux/amd64"
         }
       ]

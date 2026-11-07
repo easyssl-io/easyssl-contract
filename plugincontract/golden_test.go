@@ -49,7 +49,7 @@ func TestMessages(t *testing.T) {
 				ExtraData: []plugincontract.ExtraDatum{{Label: l10n.Text{"en": "Locations", "es": "Ubicaciones"}, Value: "pid 812:/etc/nginx/sites-enabled/example.com:14"}},
 				Certificate: &plugincontract.DiscoveredCertificate{
 					Domains: []string{"example.com"}, KeyType: "ec_p256",
-					SHA256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+					SHA256: "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
 				},
 			}},
 			Warnings: []l10n.Text{{
