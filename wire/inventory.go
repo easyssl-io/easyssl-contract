@@ -65,8 +65,9 @@ type KeyInfo struct {
 	// hex, which is also the key file's name on the host and what the Server
 	// computes from a CSR or certificate without seeing the key.
 	Fingerprint string `json:"fingerprint"`
-	// Algorithm is the key type, as KeyTypeOf names it.
-	Algorithm string `json:"algorithm"`
+	// KeyType is the key type, as KeyTypeOf names it, the same value a
+	// CSRWork's KeyType asks for.
+	KeyType string `json:"keyType"`
 	// CreatedAt is when the key file was created, as the host reports it.
 	CreatedAt time.Time `json:"createdAt"`
 }
