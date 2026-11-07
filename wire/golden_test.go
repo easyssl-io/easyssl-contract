@@ -1,14 +1,12 @@
 package wire_test
 
 import (
-	"bytes"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/easyssl-io/easyssl-contract/contracttest"
+	"github.com/easyssl-io/easyssl-contract/internal/examples"
 	"github.com/easyssl-io/easyssl-contract/l10n"
 	"github.com/easyssl-io/easyssl-contract/wire"
 )
@@ -58,13 +56,7 @@ func TestMessages(t *testing.T) {
 			Status: wire.DeploymentStatusPending, CertificateID: "crt-aaaaaaaaaaaaaa", KeySPKISHA256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 			PluginID: "nginx", CertificatePem: "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
 			ChainPem: "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",
-			// The same nginx Target as plugincontract's examples.
-			Settings: map[string]string{
-				"ssl_certificate":     "/etc/nginx/tls/example.com.crt",
-				"ssl_certificate_key": "/etc/nginx/tls/example.com.key",
-				"test":                "nginx -t",
-				"reload":              "systemctl reload nginx",
-			},
+			Settings: examples.NginxSettings(),
 		},
 		"deployment-result": wire.DeploymentResult{
 			OK: true, PluginVersion: "0.0.1",
@@ -81,8 +73,8 @@ func TestMessages(t *testing.T) {
 			Fingerprint: "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5", Diagnostics: diagnostics,
 			Plugins: []wire.PluginInventory{{
 				ID: "nginx", SHA256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
-				Describe: pluginAnswer(t, "describe-response"),
-				Discover: pluginAnswer(t, "discover-response"),
+				Describe: answer(t, examples.Describe()),
+				Discover: answer(t, examples.Discover()),
 				Warnings: []l10n.Text{},
 			}, {
 				// A Plugin whose answers were unusable this run: no answers, and the
@@ -102,17 +94,13 @@ func TestMessages(t *testing.T) {
 	})
 }
 
-// pluginAnswer is one of plugincontract's examples, which the inventory carries
-// as the Plugin wrote it; reading the file keeps the two examples one document.
-func pluginAnswer(t *testing.T, name string) json.RawMessage {
+// answer is a Plugin's answer as the inventory carries it, the same value
+// plugincontract's examples show.
+func answer(t *testing.T, v any) json.RawMessage {
 	t.Helper()
-	b, err := os.ReadFile(filepath.Join("..", "plugincontract", "testdata", name+".json"))
+	b, err := json.Marshal(v)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var compact bytes.Buffer
-	if err := json.Compact(&compact, b); err != nil {
-		t.Fatal(err)
-	}
-	return compact.Bytes()
+	return b
 }
