@@ -13,11 +13,13 @@ the Agent or the Server instead.
 ## Code Review Rules
 
 This module is the public interface between separately installed programs: the
-Server, the Agent and each Plugin. An Agent already installed on a customer host
-cannot be force-upgraded, so one compiled against an older version of this
-module MUST keep working against a newer Server, and the same holds between the
-Agent and a Plugin, in both directions. The rules are in `README.md`
-(Versioning) and apply from the first release; until then everything stays at
+Server, the Agent and each Plugin, released apart from each other. An Agent
+already installed on a customer host cannot be force-upgraded, and a Plugin is
+built against whatever version was current when it was released, so every pair
+meets across versions: a newer Server answers an Agent on the previous breaking
+version, and an Agent runs a Plugin built against any version it speaks, older
+or newer than its own. `README.md` (Versioning) states the window and how each
+side checks it, from the first release; until then everything stays at
 `0.0.1`. Flag any of the following.
 
 - **A breaking change made in one step**: removing a field, renaming a JSON tag,

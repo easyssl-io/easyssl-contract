@@ -1,0 +1,9 @@
+{
+  "commands": [
+    {
+      "id": "cmd-aaaaaaaaaaaaaa",
+      "type": "request_csr",
+      "refId": "crt-aaaaaaaaaaaaaa"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "fingerprint": "3b1f0c9a",
+  "diagnostics": {
+    "hostname": "web-01",
+    "os": "linux/amd64",
+    "hostType": "vm",
+    "binaryPath": "/usr/local/bin/easyssl-agent",
+    "configPath": "/etc/easyssl/config.json",
+    "serviceName": "easyssl-agent.service"
+  },
+  "plugins": [
+    {
+      "id": "nginx",
+      "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+      "describe": {
+        "contractVersion": "0.0.1",
+        "version": "0.0.1",
+        "declarations": []
+      },
+      "discover": {
+        "contractVersion": "0.0.1",
+        "discoveredTargets": [],
+        "warnings": []
+      },
+      "warnings": []
+    }
+  ],
+  "keys": [
+    {
+      "fingerprint": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "algorithm": "ec_p256",
+      "createdAt": "2026-11-07T12:00:00Z"
+    }
+  ]
+}

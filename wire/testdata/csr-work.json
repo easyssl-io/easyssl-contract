@@ -1,0 +1,7 @@
+{
+  "domains": [
+    "example.com",
+    "*.example.com"
+  ],
+  "keyType": "ec_p256"
+}

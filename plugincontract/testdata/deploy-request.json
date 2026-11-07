@@ -1,0 +1,9 @@
+{
+  "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
+  "chainPem": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",
+  "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGH...\n-----END PRIVATE KEY-----\n",
+  "workDir": "/var/lib/easyssl/work/dep-aaaaaaaaaaaaaa",
+  "settings": {
+    "command": "systemctl reload nginx"
+  }
+}

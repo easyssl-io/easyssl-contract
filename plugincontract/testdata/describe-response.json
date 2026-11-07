@@ -1,0 +1,26 @@
+{
+  "contractVersion": "0.0.1",
+  "version": "0.0.1",
+  "description": {
+    "en": "Runs your `command` after writing the files.",
+    "es": "Ejecuta tu `command` tras escribir los archivos."
+  },
+  "declarations": [
+    {
+      "key": "command",
+      "label": {
+        "en": "Command",
+        "es": "Comando"
+      },
+      "description": {
+        "en": "Runs as root on the host.",
+        "es": "Se ejecuta como root en el host."
+      },
+      "type": "command",
+      "default": "",
+      "required": true,
+      "summary": true,
+      "identity": true
+    }
+  ]
+}

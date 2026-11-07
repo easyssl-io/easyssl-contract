@@ -1,0 +1,32 @@
+{
+  "contractVersion": "0.0.1",
+  "discoveredTargets": [
+    {
+      "settings": {
+        "certificatePath": "/etc/nginx/tls/example.com.crt"
+      },
+      "extraData": [
+        {
+          "label": {
+            "en": "Server name",
+            "es": "Nombre de servidor"
+          },
+          "value": "example.com"
+        }
+      ],
+      "certificate": {
+        "domains": [
+          "example.com"
+        ],
+        "keyType": "ec_p256",
+        "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "en": "`/etc/nginx/old.conf` could not be read.",
+      "es": "No se pudo leer `/etc/nginx/old.conf`."
+    }
+  ]
+}

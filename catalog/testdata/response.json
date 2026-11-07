@@ -1,0 +1,24 @@
+{
+  "plugins": [
+    {
+      "id": "generic-cli",
+      "version": "0.0.1",
+      "description": {
+        "en": "Runs your `command` after writing the files.",
+        "es": "Ejecuta tu `command` tras escribir los archivos."
+      },
+      "declarations": [],
+      "party": "first",
+      "publisher": "easySSL",
+      "sourceUrl": "https://github.com/easyssl-io/easyssl-plugins/tree/main/generic-cli",
+      "artifacts": [
+        {
+          "os": "linux",
+          "arch": "amd64",
+          "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
+          "url": "/download/plugins/generic-cli/linux/amd64"
+        }
+      ]
+    }
+  ]
+}
