@@ -1,0 +1,7 @@
+{
+  "status": "active",
+  "displayName": "web-01",
+  "nextPollSeconds": 30,
+  "reportInventory": true,
+  "pendingCommands": 1
+}

@@ -1,0 +1,16 @@
+{
+  "ok": true,
+  "pluginVersion": "0.0.1",
+  "pluginRun": {
+    "exitStatus": 0,
+    "durationMs": 412,
+    "output": [
+      {
+        "stream": "stdout",
+        "text": "nginx reloaded; serving the new certificate\n"
+      }
+    ],
+    "stdoutBytes": 31,
+    "stderrBytes": 0
+  }
+}

@@ -5,7 +5,9 @@
 //
 // A package's examples live in `testdata/<message>.json`; a release copies them
 // to `testdata/v<version>/`, and those copies never change. After an intended
-// change, `go test ./... -update` rewrites the current ones.
+// change, `go test ./<package>/ -update` rewrites the current ones; name the
+// packages, since a test binary that does not import this package does not
+// know the flag.
 package contracttest
 
 import (

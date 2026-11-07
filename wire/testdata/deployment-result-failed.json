@@ -1,0 +1,8 @@
+{
+  "ok": false,
+  "pluginVersion": "0.0.1",
+  "agentMessage": {
+    "en": "The Plugin was not installed.",
+    "es": "El Plugin no está instalado."
+  }
+}
