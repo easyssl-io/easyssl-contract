@@ -2,12 +2,14 @@
 # Tests scripts/release.sh in a throwaway clone of this repository, so nothing
 # here is ever tagged: a release follows ContractVersion, keeps a decodable
 # copy of every pinned example, and a breaking change must be recorded in
-# PreviousBreakingVersion.
+# PreviousBreakingVersion. The clone takes no tags and the test uses versions
+# 0.901 and 0.902, which no real release reaches, so it passes whatever this
+# repository has released.
 set -eu
 cd "$(dirname "$0")/.."
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-git clone -q . "$work/c"
+git clone -q --no-tags . "$work/c"
 mkdir -p "$work/c/scripts" && cp scripts/release.sh "$work/c/scripts/release.sh"
 cd "$work/c"
 # The script as it is in this checkout, committed only when it differs from
@@ -26,24 +28,24 @@ set_const() { # set_const NAME VALUE, committed with the examples it changes
   sed -i.bak "s/^const $1 = \".*\"\$/const $1 = \"$2\"/" plugincontract/plugincontract.go
   rm plugincontract/plugincontract.go.bak
   GOWORK=off go test ./wire/ ./plugincontract/ ./catalog/ -update >/dev/null
-  git commit -q -am "set $1"
+  git diff --quiet || git commit -q -am "set $1"
 }
 
-expect 1 "a version other than ContractVersion" scripts/release.sh 0.1.0
-set_const ContractVersion 0.1.0
-expect 0 "the first release" scripts/release.sh 0.1.0
-[ "$(git tag --points-at HEAD)" = v0.1.0 ] || { echo "FAIL: v0.1.0 is not on the release commit"; fail=1; }
+expect 1 "a version other than ContractVersion" scripts/release.sh 0.901.0
+set_const ContractVersion 0.901.0
+expect 0 "the first release" scripts/release.sh 0.901.0
+[ "$(git tag --points-at HEAD)" = v0.901.0 ] || { echo "FAIL: v0.901.0 is not on the release commit"; fail=1; }
 for p in wire plugincontract catalog; do
-  [ -n "$(ls "$p/testdata/v0.1.0/"*.json 2>/dev/null)" ] || { echo "FAIL: no copy of $p's examples"; fail=1; }
+  [ -n "$(ls "$p/testdata/v0.901.0/"*.json 2>/dev/null)" ] || { echo "FAIL: no copy of $p's examples"; fail=1; }
 done
-expect 1 "a version already tagged" scripts/release.sh 0.1.0
+expect 1 "a version already tagged" scripts/release.sh 0.901.0
 
-set_const ContractVersion 0.2.0
-expect 1 "a breaking change PreviousBreakingVersion does not record" scripts/release.sh 0.2.0
-set_const PreviousBreakingVersion 0.1
-expect 0 "a breaking change recorded" scripts/release.sh 0.2.0
+set_const ContractVersion 0.902.0
+expect 1 "a breaking change PreviousBreakingVersion does not record" scripts/release.sh 0.902.0
+set_const PreviousBreakingVersion 0.901
+expect 0 "a breaking change recorded" scripts/release.sh 0.902.0
 
-set_const ContractVersion 0.2.1
+set_const ContractVersion 0.902.1
 echo x >> README.md
-expect 1 "a working tree with changes" scripts/release.sh 0.2.1
+expect 1 "a working tree with changes" scripts/release.sh 0.902.1
 exit "$fail"
