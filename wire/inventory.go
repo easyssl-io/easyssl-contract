@@ -9,7 +9,7 @@ import (
 
 // Inventory is everything an Agent observes about its own host, recomputed on
 // every check-in and never persisted on the host. Nothing Server-owned is in
-// it, and no private key: KeyInfo carries a fingerprint.
+// it, and no private key: KeyInfo carries the SHA-256 of its public half.
 //
 // The document replaces: an entry absent from it is one the host no longer has,
 // which is what lets a deleted key stop being a holder. An Agent that failed to
@@ -61,12 +61,13 @@ type PluginInventory struct {
 
 // KeyInfo is one private key in the Agent's keystore, by its public half only.
 type KeyInfo struct {
-	// Fingerprint is the SHA-256 of the key's SubjectPublicKeyInfo, lowercase
+	// SPKISHA256 is the SHA-256 of the key's SubjectPublicKeyInfo, lowercase
 	// hex, which is also the key file's name on the host and what the Server
 	// computes from a CSR or certificate without seeing the key.
-	Fingerprint string `json:"fingerprint"`
-	// Algorithm is the key type, as KeyTypeOf names it.
-	Algorithm string `json:"algorithm"`
+	SPKISHA256 string `json:"spkiSha256"`
+	// KeyType is the key type, as KeyTypeOf names it, the same value a
+	// CSRWork's KeyType asks for.
+	KeyType string `json:"keyType"`
 	// CreatedAt is when the key file was created, as the host reports it.
 	CreatedAt time.Time `json:"createdAt"`
 }

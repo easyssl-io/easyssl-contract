@@ -1,5 +1,5 @@
 {
-  "fingerprint": "3b1f0c9a",
+  "fingerprint": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
   "diagnostics": {
     "hostname": "web-01",
     "os": "linux/amd64",
@@ -15,12 +15,109 @@
       "describe": {
         "contractVersion": "0.0.1",
         "version": "0.0.1",
-        "declarations": []
+        "description": {
+          "en": "Installs Certificates into nginx.",
+          "es": "Instala Certificados en nginx."
+        },
+        "declarations": [
+          {
+            "key": "ssl_certificate",
+            "label": {
+              "en": "ssl_certificate"
+            },
+            "description": {
+              "en": "The file nginx reads the Certificate from, written as the Certificate followed by its chain.",
+              "es": "El archivo del que nginx lee el Certificado, escrito como el Certificado seguido de su cadena."
+            },
+            "type": "path",
+            "default": "",
+            "required": true,
+            "summary": true,
+            "identity": true
+          },
+          {
+            "key": "ssl_certificate_key",
+            "label": {
+              "en": "ssl_certificate_key"
+            },
+            "description": {
+              "en": "The file nginx reads the private key from.",
+              "es": "El archivo del que nginx lee la clave privada."
+            },
+            "type": "path",
+            "default": "",
+            "required": true,
+            "summary": false,
+            "identity": false
+          },
+          {
+            "key": "test",
+            "label": {
+              "en": "Test command",
+              "es": "Comando de prueba"
+            },
+            "description": {
+              "en": "Checks the configuration after the files are written and before the reload.",
+              "es": "Comprueba la configuración después de escribir los archivos y antes de la recarga."
+            },
+            "type": "command",
+            "default": "nginx -t",
+            "required": true,
+            "summary": false,
+            "identity": false
+          },
+          {
+            "key": "reload",
+            "label": {
+              "en": "Reload command",
+              "es": "Comando de recarga"
+            },
+            "description": {
+              "en": "Makes nginx load the new files.",
+              "es": "Hace que nginx cargue los archivos nuevos."
+            },
+            "type": "command",
+            "default": "nginx -s reload",
+            "required": true,
+            "summary": false,
+            "identity": false
+          }
+        ]
       },
       "discover": {
         "contractVersion": "0.0.1",
-        "discoveredTargets": [],
-        "warnings": []
+        "discoveredTargets": [
+          {
+            "settings": {
+              "reload": "systemctl reload nginx",
+              "ssl_certificate": "/etc/nginx/tls/example.com.crt",
+              "ssl_certificate_key": "/etc/nginx/tls/example.com.key",
+              "test": "nginx -t"
+            },
+            "extraData": [
+              {
+                "label": {
+                  "en": "Locations",
+                  "es": "Ubicaciones"
+                },
+                "value": "pid 812:/etc/nginx/sites-enabled/example.com:14"
+              }
+            ],
+            "certificate": {
+              "domains": [
+                "example.com"
+              ],
+              "keyType": "ec_p256",
+              "sha256": "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601"
+            }
+          }
+        ],
+        "warnings": [
+          {
+            "en": "`/etc/nginx/tls/old.crt`: its names could not be read, so none are reported: the file holds no PEM certificate",
+            "es": "`/etc/nginx/tls/old.crt`: no se pudieron leer sus nombres, así que no se informa ninguno: el archivo no contiene ningún certificado PEM"
+          }
+        ]
       },
       "warnings": []
     },
@@ -38,8 +135,8 @@
   ],
   "keys": [
     {
-      "fingerprint": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
-      "algorithm": "ec_p256",
+      "spkiSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "keyType": "ec_p256",
       "createdAt": "2026-11-07T12:00:00Z"
     }
   ]

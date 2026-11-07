@@ -73,17 +73,17 @@ func ValidKeyType(t string) bool {
 // an ACME client orders the Common Name too and an added name there would be
 // one nobody requested.
 //
-// KeyFingerprint names the key to sign with, as the keystore names it: the
+// KeySPKISHA256 names the key to sign with, as the keystore names it: the
 // lowercase hex SHA-256 of its SubjectPublicKeyInfo. Empty asks for a fresh
 // key. It is set when the request reused an existing key, and once a CSR has
 // been stored, so a re-run after a crash loads the key it already used. An
 // Agent that does not hold the named key builds no CSR and never substitutes
-// one: the Server records the fingerprint of every CSR it accepts and rejects a
+// one: the Server records the key of every CSR it accepts and rejects a
 // CSR from a different key.
 type CSRWork struct {
-	Domains        []string `json:"domains"`
-	KeyType        string   `json:"keyType"`
-	KeyFingerprint string   `json:"keyFingerprint,omitempty"`
+	Domains       []string `json:"domains"`
+	KeyType       string   `json:"keyType"`
+	KeySPKISHA256 string   `json:"keySpkiSha256,omitempty"`
 }
 
 // CSRSubmission carries the PEM CSR back: one CERTIFICATE REQUEST block,
