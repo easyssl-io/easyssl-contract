@@ -23,6 +23,17 @@
         "warnings": []
       },
       "warnings": []
+    },
+    {
+      "id": "apache",
+      "sha256": "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9",
+      "unobserved": true,
+      "warnings": [
+        {
+          "en": "`discover` produced nothing usable this run: exit status 1",
+          "es": "`discover` no produjo nada utilizable en esta ejecución: exit status 1"
+        }
+      ]
     }
   ],
   "keys": [
