@@ -1,5 +1,5 @@
 {
-  "fingerprint": "3b1f0c9a",
+  "fingerprint": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
   "diagnostics": {
     "hostname": "web-01",
     "os": "linux/amd64",
@@ -38,7 +38,7 @@
   ],
   "keys": [
     {
-      "fingerprint": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+      "spkiSha256": "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
       "keyType": "ec_p256",
       "createdAt": "2026-11-07T12:00:00Z"
     }

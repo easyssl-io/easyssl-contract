@@ -31,7 +31,7 @@ func TestMessages(t *testing.T) {
 			Status: wire.AgentStatusActive, DisplayName: "web-01", AgentID: "agnt-x2nfigyipdlpv5",
 			OrganizationName: "Northwind", OrganizationID: "org-northwindaaaaaa",
 		},
-		"checkin-request": wire.CheckinRequest{InventoryFingerprint: "3b1f0c9a"},
+		"checkin-request": wire.CheckinRequest{InventoryFingerprint: "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5"},
 		"checkin-response": wire.CheckinResponse{
 			Status: wire.AgentStatusActive, DisplayName: "web-01", NextPollSeconds: 30, ReportInventory: true, PendingCommands: 1,
 			OrganizationName: "Northwind", OrganizationID: "org-northwindaaaaaa",
@@ -48,11 +48,11 @@ func TestMessages(t *testing.T) {
 		// or a re-run after a CSR was stored.
 		"csr-work-existing-key": wire.CSRWork{
 			Domains: []string{"example.com", "*.example.com"}, KeyType: wire.KeyTypeECP256,
-			KeyFingerprint: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+			KeySPKISHA256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 		},
 		"csr-submission": wire.CSRSubmission{CSR: "-----BEGIN CERTIFICATE REQUEST-----\nMIIB...\n-----END CERTIFICATE REQUEST-----\n"},
 		"deployment-work": wire.DeploymentWork{
-			Status: wire.DeploymentStatusPending, CertificateID: "crt-aaaaaaaaaaaaaa", KeyFingerprint: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+			Status: wire.DeploymentStatusPending, CertificateID: "crt-aaaaaaaaaaaaaa", KeySPKISHA256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 			PluginID: "nginx", CertificatePem: "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
 			ChainPem: "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",
 			// The same nginx Target as plugincontract's examples.
@@ -75,7 +75,7 @@ func TestMessages(t *testing.T) {
 			AgentMessage: l10n.Text{"en": "The Plugin was not installed.", "es": "El Plugin no está instalado."},
 		},
 		"inventory": wire.Inventory{
-			Fingerprint: "3b1f0c9a", Diagnostics: diagnostics,
+			Fingerprint: "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5", Diagnostics: diagnostics,
 			Plugins: []wire.PluginInventory{{
 				ID: "nginx", SHA256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
 				Describe: json.RawMessage(`{"contractVersion":"0.0.1","version":"0.0.1","declarations":[]}`),
@@ -92,7 +92,7 @@ func TestMessages(t *testing.T) {
 				}},
 			}},
 			Keys: []wire.KeyInfo{{
-				Fingerprint: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", KeyType: wire.KeyTypeECP256,
+				SPKISHA256: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08", KeyType: wire.KeyTypeECP256,
 				CreatedAt: time.Date(2026, 11, 7, 12, 0, 0, 0, time.UTC),
 			}},
 		},

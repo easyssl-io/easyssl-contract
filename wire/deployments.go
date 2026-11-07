@@ -31,7 +31,7 @@ const CodeDeploymentFinished = "deployment_finished"
 const CodeDeploymentNotFound = "deployment_not_found"
 
 // DeploymentWork is what RouteAgentDeployment answers while the Deployment is
-// pending. KeyFingerprint names the Certificate's key the way the Agent's
+// pending. KeySPKISHA256 names the Certificate's key the way the Agent's
 // keystore names it (the lowercase hex SHA-256 of its SubjectPublicKeyInfo);
 // the Agent reads that key from its own keystore and fails the Deployment if it
 // is not there. Settings is the Server-resolved value of every setting the
@@ -40,7 +40,7 @@ const CodeDeploymentNotFound = "deployment_not_found"
 type DeploymentWork struct {
 	Status         string            `json:"status"`
 	CertificateID  string            `json:"certificateId"`
-	KeyFingerprint string            `json:"keyFingerprint,omitempty"`
+	KeySPKISHA256  string            `json:"keySpkiSha256,omitempty"`
 	PluginID       string            `json:"pluginId"`
 	CertificatePem string            `json:"certificatePem,omitempty"`
 	ChainPem       string            `json:"chainPem,omitempty"`
