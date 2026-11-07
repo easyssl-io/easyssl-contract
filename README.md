@@ -79,9 +79,15 @@ release on.
    it.
 7. **A released message stays readable.** Every message has an example kept per
    released version, which every later build must still decode. `contracttest`
-   checks it: each package's current examples are in `testdata/`, and a release
-   copies them to `testdata/v<version>/`, which never change.
-8. **Versions come from release tags**, never from a constant edited by hand.
+   checks it: each package's current examples are in `testdata/`, and
+   `scripts/release.sh` copies them to `testdata/v<version>/`, which never
+   change.
+8. **Versions are tied to release tags.** A program, the Agent or a Plugin,
+   reports the version its release tag sets at build time. This module is
+   compiled into other people's programs, which pass it no build flags, so its
+   version is the constant `ContractVersion` and the tag follows it:
+   `scripts/release.sh` tags no other version, and refuses a breaking change
+   that `PreviousBreakingVersion` does not record.
 9. **One encoding.** A time is RFC 3339 in UTC and its name ends in `At`
    (`notBefore` and `notAfter` keep their X.509 names). A list is always
    present, `[]` when empty, so a reader never tells "none" from "not sent". A

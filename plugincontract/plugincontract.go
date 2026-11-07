@@ -32,8 +32,9 @@ import (
 )
 
 // ContractVersion is the version of this module, the one release tag `wire`,
-// `plugincontract` and `l10n` share; README.md says what moves it. It stays at
-// 0.0.1 until the first release.
+// `plugincontract` and `l10n` share; README.md says what moves it. A constant,
+// because importers compile it with no build flags; scripts/release.sh tags
+// only this version. It stays at 0.0.1 until the first release.
 const ContractVersion = "0.0.1"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
