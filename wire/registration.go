@@ -174,9 +174,14 @@ type CheckinResponse struct {
 	PendingCommands int `json:"pendingCommands"`
 }
 
-// ErrorResponse is the JSON body returned with a non-2xx status; Code is one of
-// the constants above.
+// ErrorResponse is the JSON body every route of the Server answers a refusal
+// with, the Agent's, the web console's and the distribution's alike. Code is
+// what a reader decides by and words in its own language: one of the
+// constants of this package on an Agent route. Params are the values that
+// wording names, by name, and Message is the Server's English, for a log; a
+// reader that knows the code does not show it.
 type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message,omitempty"`
+	Code    string            `json:"code"`
+	Params  map[string]string `json:"params"`
+	Message string            `json:"message"`
 }
