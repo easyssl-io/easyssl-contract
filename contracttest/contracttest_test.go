@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type message struct {
@@ -139,12 +140,46 @@ func TestOptionalUnset(t *testing.T) {
 		t.Fatalf("unset %v, want %v", unset, want)
 	}
 
-	full := outer{
+	if unset := optionalUnset(map[string]any{"full": full()}); len(unset) != 0 {
+		t.Fatalf("a value setting every optional field reported %v", unset)
+	}
+}
+
+// full sets every optional field of outer.
+func full() outer {
+	return outer{
 		embedded: embedded{Extra: "e"}, Optional: "y", Zeroable: 1, Items: []inner{{Note: "n"}},
 		Ptr: &inner{Note: "p"}, ByKey: map[string]inner{"k": {Note: "m"}}, Raw: json.RawMessage(`{}`),
 		Text: map[string]string{"en": "t"},
 	}
-	if unset := optionalUnset(map[string]any{"full": full}); len(unset) != 0 {
-		t.Fatalf("a value setting every optional field reported %v", unset)
+}
+
+type stamped struct {
+	At time.Time `json:"at,omitzero"`
+}
+
+// A value encoding/json omits is not set, though reflection calls it nonzero:
+// an empty map, slice or string under omitempty, and under omitzero a value
+// whose type's own IsZero says zero.
+func TestOptionalUnsetFollowsTheEncoder(t *testing.T) {
+	empty := full()
+	empty.ByKey, empty.Text, empty.Raw = map[string]inner{}, map[string]string{}, json.RawMessage{}
+	if got := strings.Join(optionalUnset(map[string]any{"empty": empty}), " "); got != "contracttest.outer.byKey contracttest.outer.raw contracttest.outer.text" {
+		t.Fatalf("empty containers left unset %q, want byKey, raw and text", got)
+	}
+	if got := optionalUnset(map[string]any{"zero": stamped{At: time.Time{}.In(time.FixedZone("x", 3600))}}); len(got) != 1 {
+		t.Fatalf("a time its own IsZero calls zero counted as set: %v", got)
+	}
+	if got := optionalUnset(map[string]any{"set": stamped{At: time.Unix(1, 0)}}); len(got) != 0 {
+		t.Fatalf("a set time reported %v", got)
+	}
+}
+
+// An optional field counts even when no example reaches it: behind an empty
+// list, an empty map or a nil pointer it is in no file either.
+func TestOptionalUnsetListsFieldsNoExampleReaches(t *testing.T) {
+	got := strings.Join(optionalUnset(map[string]any{"bare": outer{Items: []inner{}}}), " ")
+	if !strings.Contains(got, "contracttest.inner.note") {
+		t.Fatalf("a field behind an empty list and a nil pointer was not reported: %q", got)
 	}
 }
