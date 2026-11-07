@@ -77,6 +77,22 @@ func Golden(t testing.TB, path string, v any) {
 	}
 }
 
+// GoldenFile checks that got is exactly the file at path, for a contract that
+// is not JSON: a generated script or unit file. With -update it writes the
+// file instead.
+func GoldenFile(t testing.TB, path string, got []byte) {
+	t.Helper()
+	if *update {
+		if err := writeBytes(path, got); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	if err := checkBytes(path, got); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // Decodes checks that the file at path decodes into T with no field T does not
 // know and nothing after the document, and returns the value.
 func Decodes[T any](t testing.TB, path string) T {
@@ -93,10 +109,25 @@ func write(path string, v any) error {
 	if err != nil {
 		return err
 	}
+	return writeBytes(path, b)
+}
+
+func writeBytes(path string, b []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}
 	return os.WriteFile(path, b, 0o644)
+}
+
+func checkBytes(path string, got []byte) error {
+	want, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("%w; run `go test -update` to create it", err)
+	}
+	if !bytes.Equal(got, want) {
+		return fmt.Errorf("%s changed; if the change is intended, run `go test -update` in its package and review the diff\ngot:\n%s", path, got)
+	}
+	return nil
 }
 
 func check(path string, v any) error {

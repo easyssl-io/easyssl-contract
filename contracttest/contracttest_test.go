@@ -88,3 +88,16 @@ func TestCheckReleased(t *testing.T) {
 		t.Fatal("a released message whose tag was renamed still decoded")
 	}
 }
+
+func TestCheckBytes(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "unit.service")
+	if err := writeBytes(path, []byte("[Unit]\n")); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkBytes(path, []byte("[Unit]\n")); err != nil {
+		t.Fatalf("the same bytes = %v", err)
+	}
+	if err := checkBytes(path, []byte("[Unit]\n\n")); err == nil || !strings.Contains(err.Error(), "changed") {
+		t.Fatalf("one more byte = %v, want a mismatch", err)
+	}
+}
