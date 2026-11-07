@@ -114,7 +114,9 @@ const (
 
 // Setting types. The type tells a consumer how to present and check a value; a
 // command is a shell script that may span lines and is run whole via
-// `/bin/sh -c`. A reader that does not know a type shows and edits the value as
+// `/bin/sh -c`. A command runs as root and a path is written as root, so
+// whoever can set either, the Server and its Organization's administrators,
+// holds root on the host, by design. A reader that does not know a type shows and edits the value as
 // text, and never refuses the declaration: a type is added only with a new
 // contract version, and an older reader still works with the value.
 const (

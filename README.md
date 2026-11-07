@@ -31,6 +31,12 @@ what a Plugin author must get right is:
   is one it speaks (rule 6 below).
 - **Settings are declared, never guessed.** Every value `deploy` uses is a
   declared setting; the Server resolves it and the Plugin trusts it.
+- **Settings are root on the host, by design.** A `command` setting is a script
+  the Server sends that runs as root, and a `path` setting is a file the
+  Plugin writes as root. Whoever can edit a Target's settings, the Server and
+  its Organization's administrators, therefore holds root on that Agent's
+  host. The host does not second-guess them; a Plugin says so in its
+  description, and whatever shows such a setting says so beside it.
   `discover` reports each installation point it finds by those same settings,
   and what it cannot turn into one as a warning, never as a failure.
 - **Text a reader sees** is `l10n.Text`, with English always present, in the
