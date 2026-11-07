@@ -10,8 +10,10 @@ trap 'rm -rf "$work"' EXIT
 git clone -q . "$work/c"
 mkdir -p "$work/c/scripts" && cp scripts/release.sh "$work/c/scripts/release.sh"
 cd "$work/c"
+# The script as it is in this checkout, committed only when it differs from
+# the clone's, so the clone's tree is clean either way.
 git add scripts/release.sh
-git -c user.name=t -c user.email=t@example.com commit -q -m "the script under test"
+git diff --cached --quiet || git -c user.name=t -c user.email=t@example.com commit -q -m "the script under test"
 export GIT_AUTHOR_NAME=t GIT_AUTHOR_EMAIL=t@example.com GIT_COMMITTER_NAME=t GIT_COMMITTER_EMAIL=t@example.com
 
 fail=0
