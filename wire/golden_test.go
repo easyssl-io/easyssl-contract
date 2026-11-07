@@ -1,7 +1,10 @@
 package wire_test
 
 import (
+	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -78,8 +81,8 @@ func TestMessages(t *testing.T) {
 			Fingerprint: "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5", Diagnostics: diagnostics,
 			Plugins: []wire.PluginInventory{{
 				ID: "nginx", SHA256: "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
-				Describe: json.RawMessage(`{"contractVersion":"0.0.1","version":"0.0.1","declarations":[]}`),
-				Discover: json.RawMessage(`{"contractVersion":"0.0.1","discoveredTargets":[],"warnings":[]}`),
+				Describe: pluginAnswer(t, "describe-response"),
+				Discover: pluginAnswer(t, "discover-response"),
 				Warnings: []l10n.Text{},
 			}, {
 				// A Plugin whose answers were unusable this run: no answers, and the
@@ -97,4 +100,19 @@ func TestMessages(t *testing.T) {
 			}},
 		},
 	})
+}
+
+// pluginAnswer is one of plugincontract's examples, which the inventory carries
+// as the Plugin wrote it; reading the file keeps the two examples one document.
+func pluginAnswer(t *testing.T, name string) json.RawMessage {
+	t.Helper()
+	b, err := os.ReadFile(filepath.Join("..", "plugincontract", "testdata", name+".json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var compact bytes.Buffer
+	if err := json.Compact(&compact, b); err != nil {
+		t.Fatal(err)
+	}
+	return compact.Bytes()
 }
