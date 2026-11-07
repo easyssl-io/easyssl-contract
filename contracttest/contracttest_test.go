@@ -174,3 +174,12 @@ func TestOptionalUnsetFollowsTheEncoder(t *testing.T) {
 		t.Fatalf("a set time reported %v", got)
 	}
 }
+
+// An optional field counts even when no example reaches it: behind an empty
+// list, an empty map or a nil pointer it is in no file either.
+func TestOptionalUnsetListsFieldsNoExampleReaches(t *testing.T) {
+	got := strings.Join(optionalUnset(map[string]any{"bare": outer{Items: []inner{}}}), " ")
+	if !strings.Contains(got, "contracttest.inner.note") {
+		t.Fatalf("a field behind an empty list and a nil pointer was not reported: %q", got)
+	}
+}

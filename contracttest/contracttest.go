@@ -62,9 +62,15 @@ func Messages(t *testing.T, dir string, messages map[string]any) {
 // example sets, as `<type>.<json name>`. An example file holds only what its
 // value encodes, so such a field is in no file, and renaming or dropping it
 // would pass every check, the copies kept from released versions included.
+//
+// Every optional field reachable from a message's type counts, whether or not
+// an example reaches it: one behind an empty list or a nil pointer is in no
+// file either.
 func optionalUnset(messages map[string]any) []string {
 	set := map[string]bool{}
+	seen := map[reflect.Type]bool{}
 	for _, v := range messages {
+		declare(reflect.TypeOf(v), set, seen)
 		walk(reflect.ValueOf(v), set)
 	}
 	var unset []string
@@ -78,6 +84,37 @@ func optionalUnset(messages map[string]any) []string {
 }
 
 var marshaler = reflect.TypeFor[json.Marshaler]()
+
+// declare records every optional field reachable from t as unset, unless an
+// example already set it.
+func declare(t reflect.Type, set map[string]bool, seen map[reflect.Type]bool) {
+	for {
+		switch t.Kind() {
+		case reflect.Pointer, reflect.Map:
+			t = t.Elem()
+			continue
+		case reflect.Slice, reflect.Array:
+			if t.Elem().Kind() == reflect.Uint8 {
+				return
+			}
+			t = t.Elem()
+			continue
+		}
+		break
+	}
+	if t.Kind() != reflect.Struct || seen[t] || encodesItself(t) {
+		return
+	}
+	seen[t] = true
+	for _, f := range jsonFields(t) {
+		if f.optional {
+			if key := t.String() + "." + f.name; !set[key] {
+				set[key] = false
+			}
+		}
+		declare(t.Field(f.index).Type, set, seen)
+	}
+}
 
 // walk records, for every optional field reachable from v, whether v sets it.
 // A type that encodes itself (a time, raw JSON) is a leaf.
@@ -100,32 +137,52 @@ func walk(v reflect.Value, set map[string]bool) {
 		}
 	case reflect.Struct:
 		t := v.Type()
-		if t.Implements(marshaler) || reflect.PointerTo(t).Implements(marshaler) {
+		if encodesItself(t) {
 			return
 		}
-		for i := range t.NumField() {
-			f := t.Field(i)
-			tag := f.Tag.Get("json")
-			name, opts, _ := strings.Cut(tag, ",")
-			// encoding/json promotes an untagged embedded struct's fields,
-			// even when the struct's own type is unexported.
-			if f.Anonymous && name == "" && tag != "-" {
-				walk(v.Field(i), set)
-				continue
+		for _, f := range jsonFields(t) {
+			if f.optional {
+				key := t.String() + "." + f.name
+				set[key] = set[key] || !omitted(v.Field(f.index), f.opts)
 			}
-			if !f.IsExported() || tag == "-" {
-				continue
-			}
-			if name == "" {
-				name = f.Name
-			}
-			if hasOption(opts, "omitempty") || hasOption(opts, "omitzero") {
-				key := t.String() + "." + name
-				set[key] = set[key] || !omitted(v.Field(i), opts)
-			}
-			walk(v.Field(i), set)
+			walk(v.Field(f.index), set)
 		}
 	}
+}
+
+func encodesItself(t reflect.Type) bool {
+	return t.Implements(marshaler) || reflect.PointerTo(t).Implements(marshaler)
+}
+
+// jsonField is one field of a struct as encoding/json sees it. An untagged
+// embedded struct is listed with no name: the encoder promotes its fields,
+// even when the struct's own type is unexported.
+type jsonField struct {
+	index      int
+	name, opts string
+	optional   bool
+}
+
+func jsonFields(t reflect.Type) []jsonField {
+	var out []jsonField
+	for i := range t.NumField() {
+		f := t.Field(i)
+		tag := f.Tag.Get("json")
+		name, opts, _ := strings.Cut(tag, ",")
+		if f.Anonymous && name == "" && tag != "-" {
+			out = append(out, jsonField{index: i})
+			continue
+		}
+		if !f.IsExported() || tag == "-" {
+			continue
+		}
+		if name == "" {
+			name = f.Name
+		}
+		out = append(out, jsonField{index: i, name: name, opts: opts,
+			optional: hasOption(opts, "omitempty") || hasOption(opts, "omitzero")})
+	}
+	return out
 }
 
 // omitted says whether encoding/json leaves a field with these options out:
