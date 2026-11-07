@@ -5,10 +5,41 @@ their JSON tags:
 
 - `wire`: the Server and the Agent, over HTTPS.
 - `plugincontract`: the Agent and each Plugin, one execution per operation.
-- `l10n`: text carried in every supported language, used by both.
+- `catalog`: the Marketplace, which a Server publishes and an Agent reads
+  before installing a Plugin.
+- `l10n`: text carried in every supported language, used by all three.
 
-The JSON tag is the contract, not the Go identifier. This module has no
-dependencies, so it can be audited quickly.
+The JSON tag is the contract, not the Go identifier. This module depends on
+nothing outside the standard library, so it can be audited quickly.
+
+## Writing a Plugin
+
+A Plugin is one executable that the Agent runs once per operation, as root,
+with the operation's name as its only argument: `describe`, `discover` or
+`deploy`. The package documentation of `plugincontract` is the specification;
+what a Plugin author must get right is:
+
+- **One run, one answer.** A request rides stdin and a `describe` or `discover`
+  answer rides stdout as JSON; stderr is for the Plugin's own diagnostics and is
+  never parsed. `deploy` has no answer document: exit 0 means the Certificate
+  is installed, anything else that it is not, and stdout is what happened, for
+  a person to read.
+- **Its version and the contract's.** `describe` reports the Plugin's own
+  version and the contract version it was built against. The Agent installs a
+  Plugin only from the catalog, after checking the artifact's SHA-256 against
+  the one the catalog publishes, and runs it only while that contract version
+  is one it speaks (rule 6 below).
+- **Settings are declared, never guessed.** Every value `deploy` uses is a
+  declared setting; the Server resolves it and the Plugin trusts it.
+  `discover` reports each installation point it finds by those same settings,
+  and what it cannot turn into one as a warning, never as a failure.
+- **Text a reader sees** is `l10n.Text`, with English always present, in the
+  Markdown subset stated on `SettingDeclaration.Description`. Paths, commands,
+  values and program output are never translated.
+- **`EASYSSL_*` environment variables** are reserved for this contract; a
+  Plugin sets only the ones it documents for the commands it runs.
+
+The smallest complete example is `generic-cli` in `easyssl-plugins`.
 
 ## Versioning
 
