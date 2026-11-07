@@ -50,3 +50,19 @@ func TestEncodingRules(t *testing.T) {
 		}
 	}
 }
+
+// The Organization's name and id are read best effort, so a Server that could
+// not read them omits them rather than sending "" for unknown (rule 9).
+func TestUnknownOrganizationIsOmitted(t *testing.T) {
+	for _, v := range []any{wire.RegistrationResponse{}, wire.RegistrationStatus{}, wire.CheckinResponse{}} {
+		raw, err := json.Marshal(v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, key := range []string{`"organizationName"`, `"organizationId"`} {
+			if strings.Contains(string(raw), key) {
+				t.Errorf("%T sends %s when it is unknown: %s", v, key, raw)
+			}
+		}
+	}
+}
