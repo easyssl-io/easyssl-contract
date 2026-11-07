@@ -27,7 +27,8 @@ import (
 var update = flag.Bool("update", false, "rewrite the contract's example files from the values the tests build")
 
 // Messages pins every message of a package: each value is checked against
-// `<dir>/<name>.json` with Golden, and every file in each `<dir>/v*/` copy is
+// `<dir>/<name>.json` with Golden, every optional field must be set by at least
+// one value (optionalUnset), and every file in each `<dir>/v*/` copy is
 // checked with Decodes against the type of the message it is named after. A
 // released file whose message no longer exists fails, since removing a
 // message breaks its readers.
@@ -41,6 +42,11 @@ func Messages(t *testing.T, dir string, messages map[string]any) {
 	for _, name := range names {
 		t.Run(name, func(t *testing.T) { Golden(t, filepath.Join(dir, name+".json"), messages[name]) })
 	}
+	t.Run("every optional field", func(t *testing.T) {
+		if unset := optionalUnset(messages); len(unset) > 0 {
+			t.Fatalf("no example sets %s; give one example a value for each", strings.Join(unset, ", "))
+		}
+	})
 	released, _ := filepath.Glob(filepath.Join(dir, "v*", "*.json"))
 	for _, path := range released {
 		name := strings.TrimSuffix(filepath.Base(path), ".json")
@@ -50,6 +56,85 @@ func Messages(t *testing.T, dir string, messages map[string]any) {
 			}
 		})
 	}
+}
+
+// optionalUnset lists the optional fields (`omitempty` or `omitzero`) that no
+// example sets, as `<type>.<json name>`. An example file holds only what its
+// value encodes, so such a field is in no file, and renaming or dropping it
+// would pass every check, the copies kept from released versions included.
+func optionalUnset(messages map[string]any) []string {
+	set := map[string]bool{}
+	for _, v := range messages {
+		walk(reflect.ValueOf(v), set)
+	}
+	var unset []string
+	for field, ok := range set {
+		if !ok {
+			unset = append(unset, field)
+		}
+	}
+	sort.Strings(unset)
+	return unset
+}
+
+var marshaler = reflect.TypeFor[json.Marshaler]()
+
+// walk records, for every optional field reachable from v, whether v sets it.
+// A type that encodes itself (a time, raw JSON) is a leaf.
+func walk(v reflect.Value, set map[string]bool) {
+	switch v.Kind() {
+	case reflect.Pointer, reflect.Interface:
+		if !v.IsNil() {
+			walk(v.Elem(), set)
+		}
+	case reflect.Slice, reflect.Array:
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+			return
+		}
+		for i := range v.Len() {
+			walk(v.Index(i), set)
+		}
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			walk(v.MapIndex(k), set)
+		}
+	case reflect.Struct:
+		t := v.Type()
+		if t.Implements(marshaler) || reflect.PointerTo(t).Implements(marshaler) {
+			return
+		}
+		for i := range t.NumField() {
+			f := t.Field(i)
+			tag := f.Tag.Get("json")
+			name, opts, _ := strings.Cut(tag, ",")
+			// encoding/json promotes an untagged embedded struct's fields,
+			// even when the struct's own type is unexported.
+			if f.Anonymous && name == "" && tag != "-" {
+				walk(v.Field(i), set)
+				continue
+			}
+			if !f.IsExported() || tag == "-" {
+				continue
+			}
+			if name == "" {
+				name = f.Name
+			}
+			if hasOption(opts, "omitempty") || hasOption(opts, "omitzero") {
+				key := t.String() + "." + name
+				set[key] = set[key] || !v.Field(i).IsZero()
+			}
+			walk(v.Field(i), set)
+		}
+	}
+}
+
+func hasOption(opts, want string) bool {
+	for _, o := range strings.Split(opts, ",") {
+		if o == want {
+			return true
+		}
+	}
+	return false
 }
 
 func checkReleased(path string, messages map[string]any) error {

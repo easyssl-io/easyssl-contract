@@ -1,6 +1,7 @@
 package contracttest
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -99,5 +100,51 @@ func TestCheckBytes(t *testing.T) {
 	}
 	if err := checkBytes(path, []byte("[Unit]\n\n")); err == nil || !strings.Contains(err.Error(), "changed") {
 		t.Fatalf("one more byte = %v, want a mismatch", err)
+	}
+}
+
+type inner struct {
+	Note string `json:"note,omitempty"`
+}
+
+type embedded struct {
+	Extra string `json:"extra,omitempty"`
+}
+
+type outer struct {
+	embedded
+	Name     string            `json:"name"`
+	Optional string            `json:"optional,omitempty"`
+	Zeroable int               `json:"zeroable,omitzero"`
+	Items    []inner           `json:"items"`
+	Ptr      *inner            `json:"ptr,omitempty"`
+	ByKey    map[string]inner  `json:"byKey,omitempty"`
+	Raw      json.RawMessage   `json:"raw,omitempty"`
+	Skipped  string            `json:"-"`
+	Text     map[string]string `json:"text,omitempty"`
+}
+
+// An optional field counts as set when any example sets it, at any depth;
+// one no example sets is reported, a required field never is.
+func TestOptionalUnset(t *testing.T) {
+	unset := optionalUnset(map[string]any{
+		"a": outer{Name: "x", Optional: "y", Items: []inner{{}}},
+		"b": outer{Zeroable: 1, Items: []inner{{Note: "n"}}},
+	})
+	want := []string{
+		"contracttest.embedded.extra", "contracttest.outer.byKey", "contracttest.outer.ptr",
+		"contracttest.outer.raw", "contracttest.outer.text",
+	}
+	if strings.Join(unset, " ") != strings.Join(want, " ") {
+		t.Fatalf("unset %v, want %v", unset, want)
+	}
+
+	full := outer{
+		embedded: embedded{Extra: "e"}, Optional: "y", Zeroable: 1, Items: []inner{{Note: "n"}},
+		Ptr: &inner{Note: "p"}, ByKey: map[string]inner{"k": {Note: "m"}}, Raw: json.RawMessage(`{}`),
+		Text: map[string]string{"en": "t"},
+	}
+	if unset := optionalUnset(map[string]any{"full": full}); len(unset) != 0 {
+		t.Fatalf("a value setting every optional field reported %v", unset)
 	}
 }

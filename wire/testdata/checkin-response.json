@@ -2,6 +2,8 @@
   "status": "active",
   "displayName": "web-01",
   "nextPollSeconds": 30,
+  "organizationName": "Northwind",
+  "organizationId": "org-northwindaaaaaa",
   "reportInventory": true,
   "pendingCommands": 1
 }
