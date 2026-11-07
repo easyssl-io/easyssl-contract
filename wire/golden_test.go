@@ -55,7 +55,13 @@ func TestMessages(t *testing.T) {
 			Status: wire.DeploymentStatusPending, CertificateID: "crt-aaaaaaaaaaaaaa", KeyFingerprint: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
 			PluginID: "nginx", CertificatePem: "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
 			ChainPem: "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",
-			Settings: map[string]string{"certificatePath": "/etc/nginx/tls/example.com.crt", "keyPath": "/etc/nginx/tls/example.com.key"},
+			// The same nginx Target as plugincontract's examples.
+			Settings: map[string]string{
+				"ssl_certificate":     "/etc/nginx/tls/example.com.crt",
+				"ssl_certificate_key": "/etc/nginx/tls/example.com.key",
+				"test":                "nginx -t",
+				"reload":              "systemctl reload nginx",
+			},
 		},
 		"deployment-result": wire.DeploymentResult{
 			OK: true, PluginVersion: "0.0.1",

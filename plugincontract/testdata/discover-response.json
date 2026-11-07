@@ -3,15 +3,18 @@
   "discoveredTargets": [
     {
       "settings": {
-        "certificatePath": "/etc/nginx/tls/example.com.crt"
+        "reload": "systemctl reload nginx",
+        "ssl_certificate": "/etc/nginx/tls/example.com.crt",
+        "ssl_certificate_key": "/etc/nginx/tls/example.com.key",
+        "test": "nginx -t"
       },
       "extraData": [
         {
           "label": {
-            "en": "Server name",
-            "es": "Nombre de servidor"
+            "en": "Locations",
+            "es": "Ubicaciones"
           },
-          "value": "example.com"
+          "value": "pid 812:/etc/nginx/sites-enabled/example.com:14"
         }
       ],
       "certificate": {
@@ -25,8 +28,8 @@
   ],
   "warnings": [
     {
-      "en": "`/etc/nginx/old.conf` could not be read.",
-      "es": "No se pudo leer `/etc/nginx/old.conf`."
+      "en": "`/etc/nginx/tls/old.crt`: its names could not be read, so none are reported: the file holds no PEM certificate",
+      "es": "`/etc/nginx/tls/old.crt`: no se pudieron leer sus nombres, así que no se informa ninguno: el archivo no contiene ningún certificado PEM"
     }
   ]
 }

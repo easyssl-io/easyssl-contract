@@ -4,6 +4,9 @@
   "privateKeyPem": "-----BEGIN PRIVATE KEY-----\nMIGH...\n-----END PRIVATE KEY-----\n",
   "workDir": "/var/lib/easyssl/work/dep-aaaaaaaaaaaaaa",
   "settings": {
-    "command": "systemctl reload nginx"
+    "reload": "systemctl reload nginx",
+    "ssl_certificate": "/etc/nginx/tls/example.com.crt",
+    "ssl_certificate_key": "/etc/nginx/tls/example.com.key",
+    "test": "nginx -t"
   }
 }
