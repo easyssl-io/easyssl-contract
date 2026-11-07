@@ -97,7 +97,11 @@ type RegistrationResponse struct {
 	// Plugin id as the Marketplace catalog names it.
 	RequiredPlugins []string `json:"requiredPlugins"`
 	NextPollSeconds int      `json:"nextPollSeconds"`
-	MarketplaceURL  string   `json:"marketplaceUrl"`
+	// MarketplaceURL is the absolute URL of the web console's page where an
+	// operator chooses Plugins, for a person to open: the Agent shows it while
+	// it waits to be authorized and never fetches it. The catalog the Agent
+	// reads is catalog.RouteCatalog, on the Server it registered with.
+	MarketplaceURL string `json:"marketplaceUrl"`
 	// OrganizationName is what the web console calls the Organization this host
 	// now belongs to. Sent so the host can say where it is registered without a
 	// second call: in the installer's output, in `easyssl-agent status` and in the
