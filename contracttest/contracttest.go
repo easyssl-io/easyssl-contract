@@ -109,7 +109,7 @@ func check(path string, v any) error {
 		return fmt.Errorf("%w; run `go test -update` to create it", err)
 	}
 	if !bytes.Equal(got, want) {
-		return fmt.Errorf("%T no longer encodes as %s; if the change is intended, run `go test -update` and review the diff\ngot:\n%s", v, path, got)
+		return fmt.Errorf("%T no longer encodes as %s; if the change is intended, run `go test -update` in its package and review the diff\ngot:\n%s", v, path, got)
 	}
 	back := reflect.New(reflect.TypeOf(v))
 	if err := decodeFile(path, back.Interface()); err != nil {

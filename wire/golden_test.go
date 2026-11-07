@@ -47,7 +47,7 @@ func TestMessages(t *testing.T) {
 		"deployment-result": wire.DeploymentResult{
 			OK: true, PluginVersion: "0.0.1",
 			PluginRun: &wire.PluginRun{
-				ExitStatus: 0, DurationMs: 412, StdoutBytes: 31, StderrBytes: 0,
+				ExitStatus: 0, DurationMs: 412, StdoutBytes: 44, StderrBytes: 0,
 				Output: []wire.OutputChunk{{Stream: wire.StreamStdout, Text: "nginx reloaded; serving the new certificate\n"}},
 			},
 		},

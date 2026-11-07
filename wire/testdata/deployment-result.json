@@ -10,7 +10,7 @@
         "text": "nginx reloaded; serving the new certificate\n"
       }
     ],
-    "stdoutBytes": 31,
+    "stdoutBytes": 44,
     "stderrBytes": 0
   }
 }

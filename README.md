@@ -72,7 +72,9 @@ release on.
    A new operation is called only on a Plugin built against a version that has
    it.
 7. **A released message stays readable.** Every message has an example kept per
-   released version, which every later build must still decode.
+   released version, which every later build must still decode. `contracttest`
+   checks it: each package's current examples are in `testdata/`, and a release
+   copies them to `testdata/v<version>/`, which never change.
 8. **Versions come from release tags**, never from a constant edited by hand.
 9. **One encoding.** A time is RFC 3339 in UTC and its name ends in `At`
    (`notBefore` and `notAfter` keep their X.509 names). A list is always
