@@ -7,7 +7,7 @@
     "nginx"
   ],
   "nextPollSeconds": 30,
-  "marketplaceUrl": "/api/v1/marketplace/catalog",
+  "marketplaceUrl": "https://console.example.com/plugins/marketplace",
   "organizationName": "Northwind",
   "organizationId": "org-northwindaaaaaa"
 }

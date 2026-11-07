@@ -21,7 +21,7 @@ func TestMessages(t *testing.T) {
 		"registration-request": wire.RegistrationRequest{RegistrationKey: "rk_example", ProposedName: "web-01", Diagnostics: diagnostics},
 		"registration-response": wire.RegistrationResponse{
 			AgentToken: "at_example", AgentID: "agnt-x2nfigyipdlpv5", Status: wire.AgentStatusPending, DisplayName: "web-01",
-			RequiredPlugins: []string{"nginx"}, NextPollSeconds: 30, MarketplaceURL: "/api/v1/marketplace/catalog",
+			RequiredPlugins: []string{"nginx"}, NextPollSeconds: 30, MarketplaceURL: "https://console.example.com/plugins/marketplace",
 			OrganizationName: "Northwind", OrganizationID: "org-northwindaaaaaa",
 		},
 		"registration-status": wire.RegistrationStatus{Status: wire.AgentStatusActive, DisplayName: "web-01", AgentID: "agnt-x2nfigyipdlpv5"},
