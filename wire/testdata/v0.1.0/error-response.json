@@ -1,0 +1,7 @@
+{
+  "code": "contract_unsupported",
+  "params": {
+    "version": "0.0.1"
+  },
+  "message": "this Server does not speak contract version 0.0.1"
+}
