@@ -1,8 +1,8 @@
 #!/bin/sh
 # Tests scripts/release.sh in a throwaway clone of this repository, so nothing
-# here is ever tagged: a release follows ContractVersion, keeps a decodable
-# copy of every pinned example, and a breaking change must be recorded in
-# PreviousBreakingVersion. The clone takes no tags and the test uses versions
+# here is ever tagged: a release needs its CHANGELOG.md entry, follows
+# ContractVersion, keeps a decodable copy of every pinned example, and a
+# breaking change must be recorded in PreviousBreakingVersion. The clone takes no tags and the test uses versions
 # 0.901 and 0.902, which no real release reaches, so it passes whatever this
 # repository has released.
 set -eu
@@ -30,7 +30,12 @@ set_const() { # set_const NAME VALUE, committed with the examples it changes
   GOWORK=off go test ./wire/ ./plugincontract/ ./catalog/ -update >/dev/null
   git diff --quiet || git commit -q -am "set $1"
 }
+entry() { # entry VERSION, committed
+  printf '\n## %s\n\nA test release.\n' "$1" >> CHANGELOG.md
+  git add CHANGELOG.md && git commit -q -m "entry $1"
+}
 
+entry 0.901.0
 expect 1 "a version other than ContractVersion" scripts/release.sh 0.901.0
 set_const ContractVersion 0.901.0
 expect 0 "the first release" scripts/release.sh 0.901.0
@@ -41,11 +46,15 @@ done
 expect 1 "a version already tagged" scripts/release.sh 0.901.0
 
 set_const ContractVersion 0.902.0
+expect 1 "a version CHANGELOG.md has no entry for" scripts/release.sh 0.902.0
+grep -q 'CHANGELOG.md has no' "$work/out" || { echo "FAIL: the refusal does not name CHANGELOG.md"; fail=1; }
+entry 0.902.0
 expect 1 "a breaking change PreviousBreakingVersion does not record" scripts/release.sh 0.902.0
 set_const PreviousBreakingVersion 0.901
 expect 0 "a breaking change recorded" scripts/release.sh 0.902.0
 
 set_const ContractVersion 0.902.1
+entry 0.902.1
 echo x >> README.md
 expect 1 "a working tree with changes" scripts/release.sh 0.902.1
 exit "$fail"

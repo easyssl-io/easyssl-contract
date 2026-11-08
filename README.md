@@ -87,7 +87,8 @@ release on.
    compiled into other people's programs, which pass it no build flags, so its
    version is the constant `ContractVersion` and the tag follows it:
    `scripts/release.sh` tags no other version, and refuses a breaking change
-   that `PreviousBreakingVersion` does not record.
+   that `PreviousBreakingVersion` does not record, and a version with no entry
+   in `CHANGELOG.md`.
 9. **One encoding.** A time is RFC 3339 in UTC and its name ends in `At`
    (`notBefore` and `notAfter` keep their X.509 names). A list is always
    present, `[]` when empty, so a reader never tells "none" from "not sent". A

@@ -3,7 +3,8 @@
 #
 #   scripts/release.sh 0.1.0
 #
-# 1. Refuses unless the working tree is clean, VERSION is not tagged yet, and
+# 1. Refuses unless the working tree is clean, VERSION is not tagged yet,
+#    CHANGELOG.md has a `## VERSION` entry, and
 #    VERSION is ContractVersion in plugincontract/plugincontract.go: the
 #    constant is the version every build of this module reports, so the tag
 #    follows it, never the reverse.
@@ -27,6 +28,8 @@ echo "$version" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$'
 if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
   echo "v$version is already tagged" >&2; exit 1
 fi
+grep -qx "## $version" CHANGELOG.md 2>/dev/null ||
+  { echo "CHANGELOG.md has no \"## $version\" entry: write what this release changes first, in its own commit" >&2; exit 1; }
 
 const() { sed -n "s/^const $1 = \"\(.*\)\"\$/\1/p" plugincontract/plugincontract.go; }
 current=$(const ContractVersion)
