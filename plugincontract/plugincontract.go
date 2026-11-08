@@ -34,8 +34,8 @@ import (
 // ContractVersion is the version of this module, the one release tag `wire`,
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
-// only this version. It stays at 0.0.1 until the first release.
-const ContractVersion = "0.0.1"
+// only this version.
+const ContractVersion = "0.1.0"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
