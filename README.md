@@ -96,4 +96,3 @@ release on.
    a zero time standing for something. `TestEncodingRules` checks the names
    and the lists.
 
-Until the first release everything stays at `0.0.1`.

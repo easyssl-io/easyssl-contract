@@ -19,8 +19,7 @@ built against whatever version was current when it was released, so every pair
 meets across versions: a newer Server answers an Agent on the previous breaking
 version, and an Agent runs a Plugin built against any version it speaks, older
 or newer than its own. `README.md` (Versioning) states the window and how each
-side checks it, from the first release; until then everything stays at
-`0.0.1`. Flag any of the following.
+side checks it. Flag any of the following.
 
 - **A breaking change made in one step**: removing a field, renaming a JSON tag,
   changing a type, narrowing the values a field may hold, or making an optional
