@@ -83,7 +83,11 @@ release on.
    `scripts/release.sh` copies them to `testdata/v<version>/`, which never
    change.
 8. **Versions are tied to release tags.** A program, the Agent or a Plugin,
-   reports the version its release tag sets at build time. This module is
+   reports the version its release tag sets at build time. A build of any
+   other commit reports the last release plus `+dev.` and that commit
+   (`0.1.0+dev.a128250e9719`), and a build made without the release tooling
+   reports `0.0.0`: neither is ever a release, and a reader comparing versions
+   ignores what follows `+`. This module is
    compiled into other people's programs, which pass it no build flags, so its
    version is the constant `ContractVersion` and the tag follows it:
    `scripts/release.sh` tags no other version, and refuses a breaking change
