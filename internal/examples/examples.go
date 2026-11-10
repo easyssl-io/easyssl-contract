@@ -44,21 +44,60 @@ func Describe() plugincontract.DescribeResponse {
 	}
 }
 
-// Discover is the nginx Plugin's discover answer, which the inventory also carries.
+// Discover is the nginx Plugin's discover answer, which the inventory also carries:
+// the Target it suggests, one it found but does not suggest, and a warning about
+// what it could not read at all.
 func Discover() plugincontract.DiscoverResponse {
 	return plugincontract.DiscoverResponse{
 		ContractVersion: plugincontract.ContractVersion,
 		DiscoveredTargets: []plugincontract.DiscoveredTarget{{
 			Settings:  NginxSettings(),
-			ExtraData: []plugincontract.ExtraDatum{{Label: l10n.Text{"en": "Locations", "es": "Ubicaciones"}, Value: "pid 812:/etc/nginx/sites-enabled/example.com:14"}},
+			ExtraData: []plugincontract.ExtraDatum{},
 			Certificate: &plugincontract.DiscoveredCertificate{
 				Domains: []string{"example.com"}, KeyType: "ec_p256",
 				SHA256: "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
 			},
+			References: []plugincontract.Reference{
+				{Setting: "ssl_certificate", File: "/etc/nginx/sites-enabled/example.com", Line: 14, Value: "/etc/nginx/tls/example.com.crt"},
+				{Setting: "ssl_certificate_key", File: "/etc/nginx/sites-enabled/example.com", Line: 15, Value: "/etc/nginx/tls/example.com.key"},
+			},
+			Warnings: []l10n.Text{},
+		}, {
+			Settings: map[string]string{
+				"ssl_certificate":     "/etc/letsencrypt/archive/example.org/fullchain2.pem",
+				"ssl_certificate_key": "/etc/letsencrypt/archive/example.org/privkey2.pem",
+				"test":                "nginx -t",
+				"reload":              "systemctl reload nginx",
+			},
+			ExtraData: []plugincontract.ExtraDatum{},
+			Certificate: &plugincontract.DiscoveredCertificate{
+				Domains: []string{"example.org", "www.example.org"}, KeyType: "ec_p256",
+				SHA256: "5e0f7a3c1b9d24e86f70a2c4d8b6e1f3a5c7e9b1d3f5a7c9e1b3d5f7a9c1e3b5",
+			},
+			References: []plugincontract.Reference{
+				{Setting: "ssl_certificate", File: "/etc/nginx/sites-enabled/example.org", Line: 9, Value: "/etc/letsencrypt/live/example.org/fullchain.pem"},
+				{Setting: "ssl_certificate_key", File: "/etc/nginx/sites-enabled/example.org", Line: 10, Value: "/etc/letsencrypt/live/example.org/privkey.pem"},
+			},
+			Warnings: []l10n.Text{{
+				"en": "`/etc/letsencrypt/archive/example.org/fullchain2.pem` is in certbot's directory `/etc/letsencrypt`, so easySSL does not deploy there. Run `sudo easyssl-agent migrate` to move it out.",
+				"es": "`/etc/letsencrypt/archive/example.org/fullchain2.pem` está en el directorio de certbot `/etc/letsencrypt`, así que easySSL no despliega ahí. Ejecuta `sudo easyssl-agent migrate` para sacarlo de ahí.",
+			}},
 		}},
 		Warnings: []l10n.Text{{
-			"en": "`/etc/nginx/tls/old.crt`: its names could not be read, so none are reported: the file holds no PEM certificate",
-			"es": "`/etc/nginx/tls/old.crt`: no se pudieron leer sus nombres, así que no se informa ninguno: el archivo no contiene ningún certificado PEM",
+			"en": "pid 977 (`/usr/sbin/nginx`): its configuration could not be read: `nginx -t` failed",
+			"es": "pid 977 (`/usr/sbin/nginx`): no se pudo leer su configuración: `nginx -t` falló",
 		}},
+	}
+}
+
+// Relocate is the request that moves the second discovered Target of Discover
+// out of certbot's directory.
+func Relocate() plugincontract.RelocateRequest {
+	return plugincontract.RelocateRequest{
+		Moves: []plugincontract.Move{
+			{From: "/etc/letsencrypt/live/example.org/fullchain.pem", To: "/etc/ssl/easyssl/example.org/certificate.pem"},
+			{From: "/etc/letsencrypt/live/example.org/privkey.pem", To: "/etc/ssl/easyssl/example.org/key.pem"},
+		},
+		References: Discover().DiscoveredTargets[1].References,
 	}
 }

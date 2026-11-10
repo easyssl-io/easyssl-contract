@@ -13,6 +13,7 @@ func TestMessages(t *testing.T) {
 	contracttest.Messages(t, "testdata", map[string]any{
 		"describe-response": examples.Describe(),
 		"discover-response": examples.Discover(),
+		"relocate-request":  examples.Relocate(),
 		"deploy-request": plugincontract.DeployRequest{
 			CertificatePem: "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
 			ChainPem:       "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",

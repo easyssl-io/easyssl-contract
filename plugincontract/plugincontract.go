@@ -35,13 +35,13 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
 // only this version.
-const ContractVersion = "0.1.0"
+const ContractVersion = "0.2.0"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
 // it, and an Agent still runs a Plugin built against it. Empty until a release
 // moves the breaking version for the first time; that release sets it.
-const PreviousBreakingVersion = ""
+const PreviousBreakingVersion = "0.1"
 
 // BreakingVersion is the part of a semantic version that a breaking change
 // moves: `0.<minor>` while the major number is 0, the major number from 1.0.0
@@ -81,11 +81,11 @@ func Compatible(v string) bool {
 // process group when it is late, reporting that Plugin unobserved for the run.
 const AnswerTimeout = 10 * time.Second
 
-// Operation names, passed as the Plugin's single argv argument. Every Plugin
-// implements all three. An operation added later comes with a new contract
-// version, and an Agent calls it only on a Plugin whose describe answer reports
-// that version or a later one, so no Plugin is ever asked for an operation it
-// does not know. A Plugin's own internal modes never take an operation name:
+// Operation names, passed as the Plugin's single argv argument. A Plugin
+// implements every operation of the contract version it reports. An operation
+// added later comes with a new contract version, and an Agent calls it only on
+// a Plugin whose describe answer reports that version or a later one
+// (AtLeast), so no Plugin is ever asked for an operation it does not know. A Plugin's own internal modes never take an operation name:
 // they are flags, so this list stays the contract's alone.
 const (
 	// OpDescribe asks the Plugin what it is: its identity, its description and
@@ -111,7 +111,55 @@ const (
 	// Deployment record and not "install", which already names installing the
 	// Agent, a Plugin and the systemd unit.
 	OpDeploy = "deploy"
+	// OpRelocate points the configuration the Plugin reads at other files: it
+	// replaces, in each reference the request names, the path as written with
+	// another, then tests and reloads as a Deployment does, and puts every file
+	// it changed back if any step fails. It writes no certificate or key: the
+	// files the new paths name exist before it runs. Added in RelocateSince; a
+	// Plugin that reports no references refuses every move. It answers like
+	// OpDeploy, with its exit status and output for a person to read.
+	OpRelocate = "relocate"
 )
+
+// RelocateSince is the contract version that added OpRelocate and the
+// references and warnings of a discovered Target.
+const RelocateSince = "0.2.0"
+
+// AtLeast reports whether version v is min or later, comparing MAJOR.MINOR.PATCH
+// and ignoring anything after `+`. A version that does not parse is never at
+// least anything, so an Agent does not call an operation on a Plugin whose
+// version it cannot read.
+func AtLeast(v, min string) bool {
+	a, okA := triple(v)
+	b, okB := triple(min)
+	if !okA || !okB {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return a[i] > b[i]
+		}
+	}
+	return true
+}
+
+func triple(v string) ([3]int, bool) {
+	var out [3]int
+	v, _, _ = strings.Cut(v, "+")
+	parts := strings.Split(v, ".")
+	if len(parts) != 3 {
+		return out, false
+	}
+	for i, p := range parts {
+		if p == "" || strings.Trim(p, "0123456789") != "" || len(p) > 9 {
+			return out, false
+		}
+		for _, c := range p {
+			out[i] = out[i]*10 + int(c-'0')
+		}
+	}
+	return out, true
+}
 
 // Setting types. The type tells a consumer how to present and check a value; a
 // command is a shell script that may span lines and is run whole via
@@ -230,6 +278,43 @@ type DiscoveredTarget struct {
 	// It is a statement about a concrete certificate, so a Plugin that knows
 	// names only from configuration, a virtual host's say, leaves it out.
 	Certificate *DiscoveredCertificate `json:"certificate,omitempty"`
+	// References are the places in the configuration the Plugin reads that name
+	// a file this Target's settings resolve, one per directive. Empty for a
+	// Plugin that reads no configuration. Added in RelocateSince; an older
+	// Plugin sends none.
+	References []Reference `json:"references"`
+	// Warnings say why this installation point is not suggested as a Target:
+	// one with any warning is reported, so a reader sees what was found, but
+	// never offered. Per language, in the Markdown subset. The Agent adds its
+	// own before reporting, for what it knows and a Plugin does not, such as
+	// a file another ACME client manages. Added in RelocateSince; an older
+	// Plugin sends none and reports only what it suggests.
+	Warnings []l10n.Text `json:"warnings"`
+}
+
+// Reference is one directive naming a file: which setting the file is the
+// value of, where the directive is, and the path exactly as written there,
+// which can differ from the setting's value (a symlink, a relative path).
+type Reference struct {
+	Setting string `json:"setting"`
+	File    string `json:"file"`
+	Line    int    `json:"line"`
+	Value   string `json:"value"`
+}
+
+// RelocateRequest is OpRelocate's request. References are the ones the person
+// running the Agent confirmed; the Plugin refuses, changing nothing, unless
+// the references its own reading of the configuration finds with a value in
+// Moves are exactly these, so what was confirmed is what changes.
+type RelocateRequest struct {
+	Moves      []Move      `json:"moves"`
+	References []Reference `json:"references"`
+}
+
+// Move replaces a path as written (Reference.Value) with another, absolute.
+type Move struct {
+	From string `json:"from"`
+	To   string `json:"to"`
 }
 
 // DiscoveredCertificate is what a Plugin read from the certificate installed
@@ -376,6 +461,8 @@ const (
 	MaxSettings = 64
 	// MaxDiscoveredTargets bounds the Targets one discover answer reports.
 	MaxDiscoveredTargets = 200
+	// MaxReferences bounds the references of one discovered Target.
+	MaxReferences = 100
 )
 
 // ValidateDescribe checks a whole describe answer, ValidateSettings included:
@@ -418,6 +505,14 @@ func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
 				return fmt.Errorf("plugincontract: an extra-data label of discovered Target %d: %w", i, err)
 			}
 		}
+		for j, w := range t.Warnings {
+			if err := w.Validate(); err != nil {
+				return fmt.Errorf("plugincontract: warning %d of discovered Target %d: %w", j, i, err)
+			}
+		}
+		if len(t.References) > MaxReferences {
+			return fmt.Errorf("plugincontract: discovered Target %d has %d references, more than %d", i, len(t.References), MaxReferences)
+		}
 	}
 	if len(d.DiscoveredTargets) == 0 {
 		return nil
@@ -442,6 +537,14 @@ func ValidateDiscover(settings []SettingDeclaration, d DiscoverResponse) error {
 		for _, k := range identity {
 			if t.Settings[k] == "" {
 				return fmt.Errorf("plugincontract: discovered Target %d gives identity setting %q no value", i, k)
+			}
+		}
+		for j, r := range t.References {
+			if !declared[r.Setting] {
+				return fmt.Errorf("plugincontract: reference %d of discovered Target %d names %q, which is not a declared setting", j, i, r.Setting)
+			}
+			if r.File == "" || r.Line < 1 || r.Value == "" {
+				return fmt.Errorf("plugincontract: reference %d of discovered Target %d needs a file, a line from 1 and a value", j, i)
 			}
 		}
 	}
