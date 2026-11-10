@@ -1,0 +1,72 @@
+{
+  "contractVersion": "0.2.0",
+  "version": "0.0.1",
+  "description": {
+    "en": "Installs Certificates into nginx.",
+    "es": "Instala Certificados en nginx."
+  },
+  "declarations": [
+    {
+      "key": "ssl_certificate",
+      "label": {
+        "en": "ssl_certificate"
+      },
+      "description": {
+        "en": "The file nginx reads the Certificate from, written as the Certificate followed by its chain.",
+        "es": "El archivo del que nginx lee el Certificado, escrito como el Certificado seguido de su cadena."
+      },
+      "type": "path",
+      "default": "",
+      "required": true,
+      "summary": true,
+      "identity": true
+    },
+    {
+      "key": "ssl_certificate_key",
+      "label": {
+        "en": "ssl_certificate_key"
+      },
+      "description": {
+        "en": "The file nginx reads the private key from.",
+        "es": "El archivo del que nginx lee la clave privada."
+      },
+      "type": "path",
+      "default": "",
+      "required": true,
+      "summary": false,
+      "identity": false
+    },
+    {
+      "key": "test",
+      "label": {
+        "en": "Test command",
+        "es": "Comando de prueba"
+      },
+      "description": {
+        "en": "Checks the configuration after the files are written and before the reload.",
+        "es": "Comprueba la configuración después de escribir los archivos y antes de la recarga."
+      },
+      "type": "command",
+      "default": "nginx -t",
+      "required": true,
+      "summary": false,
+      "identity": false
+    },
+    {
+      "key": "reload",
+      "label": {
+        "en": "Reload command",
+        "es": "Comando de recarga"
+      },
+      "description": {
+        "en": "Makes nginx load the new files.",
+        "es": "Hace que nginx cargue los archivos nuevos."
+      },
+      "type": "command",
+      "default": "nginx -s reload",
+      "required": true,
+      "summary": false,
+      "identity": false
+    }
+  ]
+}
