@@ -32,7 +32,7 @@ func TestEncodingRules(t *testing.T) {
 		wire.Inventory{}, wire.PluginInventory{}, wire.KeyInfo{},
 		plugincontract.SettingDeclaration{}, plugincontract.DescribeResponse{}, plugincontract.DiscoverResponse{},
 		plugincontract.DiscoveredTarget{}, plugincontract.DiscoveredCertificate{}, plugincontract.ExtraDatum{},
-		plugincontract.DeployRequest{},
+		plugincontract.DeployRequest{}, plugincontract.Reference{}, plugincontract.RelocateRequest{}, plugincontract.Move{},
 	} {
 		typ := reflect.TypeOf(v)
 		for i := range typ.NumField() {
