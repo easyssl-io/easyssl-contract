@@ -35,13 +35,13 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
 // only this version.
-const ContractVersion = "0.1.1"
+const ContractVersion = "0.2.0"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
 // it, and an Agent still runs a Plugin built against it. Empty until a release
 // moves the breaking version for the first time; that release sets it.
-const PreviousBreakingVersion = ""
+const PreviousBreakingVersion = "0.1"
 
 // BreakingVersion is the part of a semantic version that a breaking change
 // moves: `0.<minor>` while the major number is 0, the major number from 1.0.0
@@ -123,7 +123,7 @@ const (
 
 // RelocateSince is the contract version that added OpRelocate and the
 // references and warnings of a discovered Target.
-const RelocateSince = "0.1.1"
+const RelocateSince = "0.2.0"
 
 // AtLeast reports whether version v is min or later, comparing MAJOR.MINOR.PATCH
 // and ignoring anything after `+`. A version that does not parse is never at

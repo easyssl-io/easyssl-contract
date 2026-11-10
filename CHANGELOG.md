@@ -4,14 +4,19 @@ Every release of `easyssl-contract`, newest first. What a version number
 promises is in [README.md](README.md#versioning); `scripts/release.sh` tags
 no version this file has no entry for.
 
-## 0.1.1
+## 0.2.0
 
-Additions for moving certificates out of another ACME client's directory.
+Breaking, for moving certificates out of another ACME client's directory:
+the Agent, no longer each Plugin, refuses to deploy into a directory another
+ACME client manages. A 0.1 Agent would run a 0.2 Plugin with nothing refusing
+those paths, so this release moves the breaking version and such an Agent
+refuses such a Plugin; a 0.2 Agent still runs 0.1 Plugins, which keep their
+own check, and a Server still answers 0.1 Agents (`PreviousBreakingVersion`).
 
 - `plugincontract`: a discovered Target's `references` (where the
   configuration names its files) and `warnings` (why it is not suggested;
   any warning means not suggested), and the `relocate` operation, which
-  rewrites those references and is called only on a Plugin reporting 0.1.1
+  rewrites those references and is called only on a Plugin reporting 0.2.0
   or later (`AtLeast`, `RelocateSince`).
 
 ## 0.1.0
