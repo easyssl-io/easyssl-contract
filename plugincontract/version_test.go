@@ -35,6 +35,11 @@ func TestCompatible(t *testing.T) {
 // breaking version, and a 0.1 build (PreviousBreakingVersion empty) does not
 // speak to 0.2, which is what keeps a 0.1 Agent from running a 0.2 Plugin.
 func TestCompatibleAcrossTheACMEBreak(t *testing.T) {
+	// Only while 0.2 is the current breaking version: scripts/release.test.sh
+	// moves ContractVersion to versions no release reaches.
+	if own, _ := BreakingVersion(ContractVersion); own != "0.2" {
+		t.Skipf("ContractVersion is %s", ContractVersion)
+	}
 	for v, want := range map[string]bool{"0.2.0": true, "0.2.5": true, "0.1.0": true, "0.1.9": true, "0.3.0": false, "0.0.1": false} {
 		if got := Compatible(v); got != want {
 			t.Errorf("Compatible(%q) = %v, want %v", v, got, want)
