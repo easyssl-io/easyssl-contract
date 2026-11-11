@@ -37,5 +37,16 @@
         }
       ]
     }
-  ]
+  ],
+  "agent": {
+    "version": "0.2.2",
+    "artifacts": [
+      {
+        "os": "linux",
+        "arch": "amd64",
+        "sha256": "5a713b52153da8911d0abdb7f32894138ebb58e533bb257021dcc912b98e02cb",
+        "url": "/api/v1/download/easyssl-agent/linux/amd64"
+      }
+    ]
+  }
 }

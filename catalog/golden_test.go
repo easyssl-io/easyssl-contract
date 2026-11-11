@@ -26,6 +26,11 @@ func TestMessages(t *testing.T) {
 				OS: "linux", Arch: "amd64", SHA256: "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823",
 				URL: wire.APIPrefix + catalog.PluginArtifactPath("generic-cli", "linux", "amd64"),
 			}},
-		}}},
+		}},
+			Agent: &catalog.Agent{Version: "0.2.2", Artifacts: []catalog.Artifact{{
+				OS: "linux", Arch: "amd64", SHA256: "5a713b52153da8911d0abdb7f32894138ebb58e533bb257021dcc912b98e02cb",
+				URL: wire.APIPrefix + catalog.AgentArtifactPath("linux", "amd64"),
+			}}},
+		},
 	})
 }

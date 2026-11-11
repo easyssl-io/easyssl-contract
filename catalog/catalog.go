@@ -30,9 +30,30 @@ const (
 // party an Agent installs.
 const PartyFirst = "first"
 
-// Response is what RouteCatalog answers: every Plugin the Server offers.
+// Response is what RouteCatalog answers: every Plugin the Server offers, and
+// the Agent it hands out.
 type Response struct {
 	Plugins []Plugin `json:"plugins"`
+	// Agent is the Agent build the Server hands out, which an Agent reads to
+	// update itself; absent when the Server holds none.
+	//
+	// Its shape is frozen across breaking versions: the catalog and the
+	// downloads are not behind the contract gate, so this entry is how an Agent
+	// a Server no longer speaks to reaches one it does, and a later release
+	// changing it would take that away from the Agents that need it most.
+	Agent *Agent `json:"agent,omitempty"`
+}
+
+// AgentUpdateSince is the first contract version whose Agents update
+// themselves from Response.Agent (`easyssl-agent update`); an Agent built
+// against an older one is updated by running the installer again.
+const AgentUpdateSince = "0.2.1"
+
+// Agent is the Agent build a Server hands out: its version, and one artifact
+// per platform it holds a build for, each served at RouteAgentArtifact.
+type Agent struct {
+	Version   string     `json:"version"`
+	Artifacts []Artifact `json:"artifacts"`
 }
 
 // Plugin is one Plugin the Server offers. Its version, description and
@@ -56,7 +77,7 @@ type Plugin struct {
 	Artifacts []Artifact `json:"artifacts"`
 }
 
-// Artifact is one build of a Plugin for one platform.
+// Artifact is one build of a Plugin, or of the Agent, for one platform.
 type Artifact struct {
 	OS   string `json:"os"`
 	Arch string `json:"arch"`
