@@ -10,6 +10,9 @@ no version this file has no entry for.
   and one artifact per platform), which an Agent from this version on
   (`AgentUpdateSince`) reads to update itself. Its shape is frozen across
   breaking versions.
+- `catalog`: each Plugin's `contractVersion`, the contract its build was made
+  against, so an Agent updating itself can tell whether it would still run the
+  Plugin builds it is about to install.
 
 ## 0.2.0
 

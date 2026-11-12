@@ -60,9 +60,14 @@ type Agent struct {
 // declarations are its own `describe` answer; the rest is about distributing
 // it.
 type Plugin struct {
-	ID          string    `json:"id"`
-	Version     string    `json:"version"`
-	Description l10n.Text `json:"description"`
+	ID      string `json:"id"`
+	Version string `json:"version"`
+	// ContractVersion is the contract version the build was made against, from
+	// its `describe` answer, so an Agent about to replace itself can tell
+	// whether the new build would still run this Plugin's. Empty from a Server
+	// older than the field.
+	ContractVersion string    `json:"contractVersion,omitempty"`
+	Description     l10n.Text `json:"description"`
 	// Declarations are the Plugin's own, so a reader can see what a Target of
 	// it is configured with before anything is installed.
 	Declarations []plugincontract.SettingDeclaration `json:"declarations"`

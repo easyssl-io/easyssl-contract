@@ -14,7 +14,7 @@ import (
 func TestMessages(t *testing.T) {
 	contracttest.Messages(t, "testdata", map[string]any{
 		"response": catalog.Response{Plugins: []catalog.Plugin{{
-			ID: "generic-cli", Version: "0.0.1",
+			ID: "generic-cli", Version: "0.0.1", ContractVersion: "0.2.0",
 			Description: l10n.Text{"en": "Installs a Certificate on a host by running a command you write.", "es": "Instala un Certificado en un host ejecutando un comando que tú escribes."},
 			Declarations: []plugincontract.SettingDeclaration{{
 				Key: "install", Label: l10n.Text{"en": "Install command", "es": "Comando de instalación"},
