@@ -13,6 +13,9 @@ no version this file has no entry for.
 - `catalog`: each Plugin's `contractVersion`, the contract its build was made
   against, so an Agent updating itself can tell whether it would still run the
   Plugin builds it is about to install.
+- `catalog`: `Release`, one finished release of a Plugin or of the Agent as its
+  `releases.json` records it, listed as each Plugin's `releases` and the
+  response's `agentReleases`.
 
 ## 0.2.0
 

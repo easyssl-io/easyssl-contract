@@ -42,6 +42,10 @@ type Response struct {
 	// a Server no longer speaks to reaches one it does, and a later release
 	// changing it would take that away from the Agents that need it most.
 	Agent *Agent `json:"agent,omitempty"`
+	// AgentReleases are the Agent's finished releases, newest first, which the
+	// Marketplace lists beside the build handed out now. Outside Agent, whose
+	// shape is frozen.
+	AgentReleases []Release `json:"agentReleases,omitempty"`
 }
 
 // AgentUpdateSince is the first contract version whose Agents update
@@ -80,6 +84,38 @@ type Plugin struct {
 	// Artifacts are the builds the Server holds, one per platform it has one
 	// for; a platform with none is absent rather than offered and broken.
 	Artifacts []Artifact `json:"artifacts"`
+	// Releases are the Plugin's finished releases, newest first, which the
+	// Marketplace lists beside the build handed out now. The build handed out
+	// is one of them when its Version is; a development build is none.
+	Releases []Release `json:"releases,omitempty"`
+}
+
+// Release is one finished release of a Plugin or of the Agent, as the release
+// recorded it in the `releases.json` kept with its code: a JSON array of these,
+// newest first, which a Server carries and lists in the catalog. Nothing in it
+// is downloadable; only the build a Server holds is.
+type Release struct {
+	Version string `json:"version"`
+	// Date is the day it was released, YYYY-MM-DD in UTC.
+	Date            string `json:"date"`
+	ContractVersion string `json:"contractVersion"`
+	// Description and Declarations are a Plugin's `describe` answer at this
+	// release, so a reader sees what each version declared; absent for the
+	// Agent.
+	Description  l10n.Text                           `json:"description,omitempty"`
+	Declarations []plugincontract.SettingDeclaration `json:"declarations,omitempty"`
+	// Builds are the release's published builds, one per platform, by the
+	// SHA-256 of their bytes: a host's build with one of these is that release.
+	// Absent for a release recorded after the fact, whose bytes were never
+	// published.
+	Builds []Build `json:"builds,omitempty"`
+}
+
+// Build is one platform's build of a Release, named by its digest.
+type Build struct {
+	OS     string `json:"os"`
+	Arch   string `json:"arch"`
+	SHA256 string `json:"sha256"`
 }
 
 // Artifact is one build of a Plugin, or of the Agent, for one platform.

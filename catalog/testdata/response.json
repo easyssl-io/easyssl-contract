@@ -36,6 +36,39 @@
           "sha256": "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823",
           "url": "/api/v1/download/plugins/generic-cli/linux/amd64"
         }
+      ],
+      "releases": [
+        {
+          "version": "0.0.1",
+          "date": "2026-11-07",
+          "contractVersion": "0.2.0",
+          "description": {
+            "en": "Installs a Certificate on a host by running a command you write.",
+            "es": "Instala un Certificado en un host ejecutando un comando que tú escribes."
+          },
+          "declarations": [
+            {
+              "key": "install",
+              "label": {
+                "en": "Install command",
+                "es": "Comando de instalación"
+              },
+              "description": null,
+              "type": "command",
+              "default": "",
+              "required": true,
+              "summary": false,
+              "identity": false
+            }
+          ],
+          "builds": [
+            {
+              "os": "linux",
+              "arch": "amd64",
+              "sha256": "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823"
+            }
+          ]
+        }
       ]
     }
   ],
@@ -49,5 +82,19 @@
         "url": "/api/v1/download/easyssl-agent/linux/amd64"
       }
     ]
-  }
+  },
+  "agentReleases": [
+    {
+      "version": "0.2.2",
+      "date": "2026-11-14",
+      "contractVersion": "0.2.1",
+      "builds": [
+        {
+          "os": "linux",
+          "arch": "amd64",
+          "sha256": "5a713b52153da8911d0abdb7f32894138ebb58e533bb257021dcc912b98e02cb"
+        }
+      ]
+    }
+  ]
 }
