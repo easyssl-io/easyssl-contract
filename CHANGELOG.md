@@ -4,6 +4,12 @@ Every release of `easyssl-contract`, newest first. What a version number
 promises is in [README.md](README.md#versioning); `scripts/release.sh` tags
 no version this file has no entry for.
 
+## 0.2.2
+
+- `plugincontract`: a discovered certificate's `certificatePem` (the leaf) and
+  `chainPem` (what the server sends after it), so the Server can describe a
+  certificate it did not issue.
+
 ## 0.2.1
 
 - `catalog`: the Agent build a Server hands out (`Response.Agent`: its version
