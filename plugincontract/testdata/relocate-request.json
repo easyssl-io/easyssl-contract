@@ -22,5 +22,6 @@
       "line": 10,
       "value": "/etc/letsencrypt/live/example.org/privkey.pem"
     }
-  ]
+  ],
+  "note": "now managed by easySSL; check nothing else here still uses /etc/letsencrypt"
 }

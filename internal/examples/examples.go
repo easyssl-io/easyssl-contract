@@ -101,5 +101,6 @@ func Relocate() plugincontract.RelocateRequest {
 			{From: "/etc/letsencrypt/live/example.org/privkey.pem", To: "/etc/ssl/easyssl/example.org/key.pem"},
 		},
 		References: Discover().DiscoveredTargets[1].References,
+		Note:       "now managed by easySSL; check nothing else here still uses /etc/letsencrypt",
 	}
 }
