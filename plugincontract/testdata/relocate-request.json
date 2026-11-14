@@ -23,5 +23,5 @@
       "value": "/etc/letsencrypt/live/example.org/privkey.pem"
     }
   ],
-  "note": "now managed by easySSL; check the other \"managed by Certbot\" lines"
+  "note": "now managed by easySSL; check nothing else here still uses /etc/letsencrypt"
 }
