@@ -4,6 +4,11 @@ Every release of `easyssl-contract`, newest first. What a version number
 promises is in [README.md](README.md#versioning); `scripts/release.sh` tags
 no version this file has no entry for.
 
+## 0.2.3
+
+- `plugincontract`: `RelocateRequest.note`, a line of text the Plugin leaves
+  as a comment on each configuration line it changes.
+
 ## 0.2.2
 
 - `plugincontract`: a discovered certificate's `certificatePem` (the leaf) and

@@ -1,5 +1,5 @@
 {
-  "contractVersion": "0.2.2",
+  "contractVersion": "0.2.3",
   "version": "0.0.1",
   "description": {
     "en": "Installs Certificates into nginx.",

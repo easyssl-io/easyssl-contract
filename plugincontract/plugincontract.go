@@ -35,7 +35,7 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
 // only this version.
-const ContractVersion = "0.2.2"
+const ContractVersion = "0.2.3"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
@@ -309,6 +309,12 @@ type Reference struct {
 type RelocateRequest struct {
 	Moves      []Move      `json:"moves"`
 	References []Reference `json:"references"`
+	// Note is one line of text, in the language the Agent runs in, that the
+	// Plugin leaves as a comment on each configuration line it changes, in
+	// that configuration's comment syntax, so whoever reads the file later
+	// knows why the line changed. Empty for none. Added in 0.2.3; an older
+	// Agent sends none, and an older Plugin ignores it.
+	Note string `json:"note,omitempty"`
 }
 
 // Move replaces a path as written (Reference.Value) with another, absolute.
