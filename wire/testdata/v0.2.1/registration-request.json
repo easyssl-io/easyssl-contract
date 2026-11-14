@@ -1,0 +1,12 @@
+{
+  "registrationKey": "rk_example",
+  "proposedName": "web-01",
+  "diagnostics": {
+    "hostname": "web-01",
+    "os": "linux/amd64",
+    "hostType": "vm",
+    "binaryPath": "/usr/local/bin/easyssl-agent",
+    "configPath": "/etc/easyssl/config.json",
+    "serviceName": "easyssl-agent.service"
+  }
+}
