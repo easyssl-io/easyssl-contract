@@ -4,7 +4,7 @@ Every release of `easyssl-contract`, newest first. What a version number
 promises is in [README.md](README.md#versioning); `scripts/release.sh` tags
 no version this file has no entry for.
 
-## Unreleased
+## 0.2.1
 
 - `catalog`: the Agent build a Server hands out (`Response.Agent`: its version
   and one artifact per platform), which an Agent from this version on
