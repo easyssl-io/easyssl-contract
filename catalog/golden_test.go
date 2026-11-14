@@ -14,7 +14,7 @@ import (
 func TestMessages(t *testing.T) {
 	contracttest.Messages(t, "testdata", map[string]any{
 		"response": catalog.Response{Plugins: []catalog.Plugin{{
-			ID: "generic-cli", Version: "0.0.1",
+			ID: "generic-cli", Version: "0.0.1", ContractVersion: "0.2.0",
 			Description: l10n.Text{"en": "Installs a Certificate on a host by running a command you write.", "es": "Instala un Certificado en un host ejecutando un comando que tú escribes."},
 			Declarations: []plugincontract.SettingDeclaration{{
 				Key: "install", Label: l10n.Text{"en": "Install command", "es": "Comando de instalación"},
@@ -26,6 +26,24 @@ func TestMessages(t *testing.T) {
 				OS: "linux", Arch: "amd64", SHA256: "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823",
 				URL: wire.APIPrefix + catalog.PluginArtifactPath("generic-cli", "linux", "amd64"),
 			}},
-		}}},
+			Releases: []catalog.Release{{
+				Version: "0.0.1", Date: "2026-11-07", ContractVersion: "0.2.0",
+				Description: l10n.Text{"en": "Installs a Certificate on a host by running a command you write.", "es": "Instala un Certificado en un host ejecutando un comando que tú escribes."},
+				Declarations: []plugincontract.SettingDeclaration{{
+					Key: "install", Label: l10n.Text{"en": "Install command", "es": "Comando de instalación"},
+					Type: plugincontract.SettingTypeCommand, Required: true,
+				}},
+				Builds: []catalog.Build{{OS: "linux", Arch: "amd64", SHA256: "1ee54b71705e472b4d06ba5c341e0f4acc0a0735be8b1c34f1ade4c6a4e77823"}},
+			}},
+		}},
+			Agent: &catalog.Agent{Version: "0.2.2", Artifacts: []catalog.Artifact{{
+				OS: "linux", Arch: "amd64", SHA256: "5a713b52153da8911d0abdb7f32894138ebb58e533bb257021dcc912b98e02cb",
+				URL: wire.APIPrefix + catalog.AgentArtifactPath("linux", "amd64"),
+			}}},
+			AgentReleases: []catalog.Release{{
+				Version: "0.2.2", Date: "2026-11-14", ContractVersion: "0.2.1",
+				Builds: []catalog.Build{{OS: "linux", Arch: "amd64", SHA256: "5a713b52153da8911d0abdb7f32894138ebb58e533bb257021dcc912b98e02cb"}},
+			}},
+		},
 	})
 }

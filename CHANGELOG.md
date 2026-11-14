@@ -4,6 +4,19 @@ Every release of `easyssl-contract`, newest first. What a version number
 promises is in [README.md](README.md#versioning); `scripts/release.sh` tags
 no version this file has no entry for.
 
+## 0.2.1
+
+- `catalog`: the Agent build a Server hands out (`Response.Agent`: its version
+  and one artifact per platform), which an Agent from this version on
+  (`AgentUpdateSince`) reads to update itself. Its shape is frozen across
+  breaking versions.
+- `catalog`: each Plugin's `contractVersion`, the contract its build was made
+  against, so an Agent updating itself can tell whether it would still run the
+  Plugin builds it is about to install.
+- `catalog`: `Release`, one finished release of a Plugin or of the Agent as its
+  `releases.json` records it, listed as each Plugin's `releases` and the
+  response's `agentReleases`.
+
 ## 0.2.0
 
 Breaking, for moving certificates out of another ACME client's directory:

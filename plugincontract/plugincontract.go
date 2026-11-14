@@ -35,7 +35,7 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
 // only this version.
-const ContractVersion = "0.2.0"
+const ContractVersion = "0.2.1"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
