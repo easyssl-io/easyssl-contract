@@ -1,0 +1,27 @@
+{
+  "moves": [
+    {
+      "from": "/etc/letsencrypt/live/example.org/fullchain.pem",
+      "to": "/etc/ssl/easyssl/example.org/certificate.pem"
+    },
+    {
+      "from": "/etc/letsencrypt/live/example.org/privkey.pem",
+      "to": "/etc/ssl/easyssl/example.org/key.pem"
+    }
+  ],
+  "references": [
+    {
+      "setting": "ssl_certificate",
+      "file": "/etc/nginx/sites-enabled/example.org",
+      "line": 9,
+      "value": "/etc/letsencrypt/live/example.org/fullchain.pem"
+    },
+    {
+      "setting": "ssl_certificate_key",
+      "file": "/etc/nginx/sites-enabled/example.org",
+      "line": 10,
+      "value": "/etc/letsencrypt/live/example.org/privkey.pem"
+    }
+  ],
+  "note": "now managed by easySSL; check nothing else here still uses /etc/letsencrypt"
+}

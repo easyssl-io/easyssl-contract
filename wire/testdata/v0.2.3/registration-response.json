@@ -1,0 +1,13 @@
+{
+  "agentToken": "at_example",
+  "agentId": "agnt-x2nfigyipdlpv5",
+  "status": "pending",
+  "displayName": "web-01",
+  "requiredPlugins": [
+    "nginx"
+  ],
+  "nextPollSeconds": 30,
+  "marketplaceUrl": "https://console.example.com/plugins/marketplace",
+  "organizationName": "Northwind",
+  "organizationId": "org-northwindaaaaaa"
+}
