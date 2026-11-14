@@ -55,7 +55,9 @@ func Discover() plugincontract.DiscoverResponse {
 			ExtraData: []plugincontract.ExtraDatum{},
 			Certificate: &plugincontract.DiscoveredCertificate{
 				Domains: []string{"example.com"}, KeyType: "ec_p256",
-				SHA256: "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
+				SHA256:         "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
+				CertificatePem: "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
+				ChainPem:       "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n",
 			},
 			References: []plugincontract.Reference{
 				{Setting: "ssl_certificate", File: "/etc/nginx/sites-enabled/example.com", Line: 14, Value: "/etc/nginx/tls/example.com.crt"},

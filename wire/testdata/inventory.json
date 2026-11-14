@@ -13,7 +13,7 @@
       "id": "nginx",
       "sha256": "2c26b46b68ffc68ff99b453c1d30413413422d706483bfa0f98a5e886266e7ae",
       "describe": {
-        "contractVersion": "0.2.1",
+        "contractVersion": "0.2.2",
         "version": "0.0.1",
         "description": {
           "en": "Installs Certificates into nginx.",
@@ -85,7 +85,7 @@
         ]
       },
       "discover": {
-        "contractVersion": "0.2.1",
+        "contractVersion": "0.2.2",
         "discoveredTargets": [
           {
             "settings": {
@@ -100,7 +100,9 @@
                 "example.com"
               ],
               "keyType": "ec_p256",
-              "sha256": "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601"
+              "sha256": "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
+              "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
+              "chainPem": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n"
             },
             "references": [
               {

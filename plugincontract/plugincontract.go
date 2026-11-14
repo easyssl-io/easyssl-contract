@@ -35,7 +35,7 @@ import (
 // `plugincontract` and `l10n` share; README.md says what moves it. A constant,
 // because importers compile it with no build flags; scripts/release.sh tags
 // only this version.
-const ContractVersion = "0.2.1"
+const ContractVersion = "0.2.2"
 
 // PreviousBreakingVersion is the breaking version before ContractVersion's,
 // which a build still speaks to: a Server still answers an Agent built against
@@ -338,6 +338,17 @@ type DiscoveredCertificate struct {
 	// what it last deployed, and that a certificate is installed where it has
 	// deployed none.
 	SHA256 string `json:"sha256,omitempty"`
+	// CertificatePem is the leaf SHA256 hashes, as one PEM CERTIFICATE block,
+	// so the Server can show what the host serves when easySSL did not issue
+	// it: issuer, validity, serial. Omitted when the Plugin did not read one.
+	// Added in ContractVersion 0.2.2; an older Plugin sends none.
+	CertificatePem string `json:"certificatePem,omitempty"`
+	// ChainPem is the certificates the server sends after the leaf, as PEM
+	// CERTIFICATE blocks in the order it sends them: the rest of the file the
+	// leaf came from, or the separate chain file a server's configuration
+	// names. Omitted when there are none or the Plugin cannot tell. Added in
+	// ContractVersion 0.2.2; an older Plugin sends none.
+	ChainPem string `json:"chainPem,omitempty"`
 }
 
 // ExtraDatum is one labeled item of a discovered Target's extra data. The
