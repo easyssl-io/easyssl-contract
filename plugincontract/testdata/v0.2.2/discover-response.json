@@ -1,0 +1,81 @@
+{
+  "contractVersion": "0.2.2",
+  "discoveredTargets": [
+    {
+      "settings": {
+        "reload": "systemctl reload nginx",
+        "ssl_certificate": "/etc/nginx/tls/example.com.crt",
+        "ssl_certificate_key": "/etc/nginx/tls/example.com.key",
+        "test": "nginx -t"
+      },
+      "extraData": [],
+      "certificate": {
+        "domains": [
+          "example.com"
+        ],
+        "keyType": "ec_p256",
+        "sha256": "14a5786863c316cc76d39e84511315bd110308108db2bb5bcce7be45f70f7601",
+        "certificatePem": "-----BEGIN CERTIFICATE-----\nMIIB...\n-----END CERTIFICATE-----\n",
+        "chainPem": "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----\n"
+      },
+      "references": [
+        {
+          "setting": "ssl_certificate",
+          "file": "/etc/nginx/sites-enabled/example.com",
+          "line": 14,
+          "value": "/etc/nginx/tls/example.com.crt"
+        },
+        {
+          "setting": "ssl_certificate_key",
+          "file": "/etc/nginx/sites-enabled/example.com",
+          "line": 15,
+          "value": "/etc/nginx/tls/example.com.key"
+        }
+      ],
+      "warnings": []
+    },
+    {
+      "settings": {
+        "reload": "systemctl reload nginx",
+        "ssl_certificate": "/etc/letsencrypt/archive/example.org/fullchain2.pem",
+        "ssl_certificate_key": "/etc/letsencrypt/archive/example.org/privkey2.pem",
+        "test": "nginx -t"
+      },
+      "extraData": [],
+      "certificate": {
+        "domains": [
+          "example.org",
+          "www.example.org"
+        ],
+        "keyType": "ec_p256",
+        "sha256": "5e0f7a3c1b9d24e86f70a2c4d8b6e1f3a5c7e9b1d3f5a7c9e1b3d5f7a9c1e3b5"
+      },
+      "references": [
+        {
+          "setting": "ssl_certificate",
+          "file": "/etc/nginx/sites-enabled/example.org",
+          "line": 9,
+          "value": "/etc/letsencrypt/live/example.org/fullchain.pem"
+        },
+        {
+          "setting": "ssl_certificate_key",
+          "file": "/etc/nginx/sites-enabled/example.org",
+          "line": 10,
+          "value": "/etc/letsencrypt/live/example.org/privkey.pem"
+        }
+      ],
+      "warnings": [
+        {
+          "en": "`/etc/letsencrypt/archive/example.org/fullchain2.pem` is in certbot's directory `/etc/letsencrypt`, so easySSL does not deploy there. Run `sudo easyssl-agent migrate` to move it out.",
+          "es": "`/etc/letsencrypt/archive/example.org/fullchain2.pem` está en el directorio de certbot `/etc/letsencrypt`, así que easySSL no despliega ahí. Ejecuta `sudo easyssl-agent migrate` para sacarlo de ahí."
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "en": "pid 977 (`/usr/sbin/nginx`): its configuration could not be read: `nginx -t` failed",
+      "es": "pid 977 (`/usr/sbin/nginx`): no se pudo leer su configuración: `nginx -t` falló"
+    }
+  ]
+}
